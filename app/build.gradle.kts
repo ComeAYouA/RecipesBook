@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "lithium.kotlin.recipesbook"
-    compileSdk = 33
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "lithium.kotlin.recipesbook"
