@@ -1,4 +1,4 @@
-package lithium.kotlin.recipesbook
+package lithium.kotlin.recipesbook.recipe_screen
 
 import android.os.Bundle
 import android.util.Log
@@ -46,9 +46,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.unit.sp
+import lithium.kotlin.recipesbook.R
 import lithium.kotlin.recipesbook.ui.theme.RecipesBookTheme
 
 class MainActivity : ComponentActivity() {
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -82,7 +85,7 @@ fun RecipeScreen(
             contentScale = ContentScale.FillWidth
         )
 
-        Desk(modifier = Modifier)
+        MainContent(modifier = Modifier)
 
         MainScreenFloatingButton(
             modifier = Modifier
@@ -141,7 +144,7 @@ fun MainScreenFloatingButton(
 
 
 @Composable
-fun Desk(
+fun MainContent(
     modifier: Modifier
 ){
 
@@ -196,7 +199,7 @@ fun Desk(
         contentAlignment = Alignment.TopCenter
     ) {
         ContentTittle(scrollState = tittleVisibilityState)
-        ContentList(
+        RecipesList(
             modifier = Modifier,
             listState = contentListState
         )
@@ -226,7 +229,7 @@ fun ContentTittle(
 }
 
 @Composable
-fun ContentList(
+fun RecipesList(
     modifier: Modifier,
     listState: LazyListState
 ){
@@ -412,13 +415,6 @@ fun TimeAmount(
         fontSize = 10.sp,
         color = Color.Black
     )
-    GitSeeMee()
 }
-
-@Composable
-fun GitSeeMee(){
-
-}
-
 
 
