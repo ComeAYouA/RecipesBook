@@ -4,10 +4,13 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,17 +22,23 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -73,6 +82,19 @@ class MainActivity : ComponentActivity() {
 fun RecipeScreen(
 
 ){
+
+    val contentListState = rememberLazyListState()
+
+    val deskFullScreen = remember {
+        derivedStateOf {
+            if (contentListState.firstVisibleItemIndex == 0){
+                contentListState.firstVisibleItemScrollOffset > 200f
+            } else {
+                true
+            }
+        }
+    }
+
     Box(
         modifier = Modifier
             .background(Color.White)
@@ -85,7 +107,18 @@ fun RecipeScreen(
             contentScale = ContentScale.FillWidth
         )
 
-        MainContent(modifier = Modifier)
+        Column {
+            TopBar(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                expanded =  { deskFullScreen.value }
+            )
+
+            MainContent(
+                modifier = Modifier,
+                contentListState
+            )
+        }
 
         MainScreenFloatingButton(
             modifier = Modifier
@@ -97,6 +130,37 @@ fun RecipeScreen(
         )
     }
 }
+
+
+@Composable
+fun TopBar(
+    modifier: Modifier = Modifier,
+    expanded: () -> Boolean
+){
+    val background by animateColorAsState(
+        targetValue = if (!expanded()){
+            Color.Transparent
+        } else {
+            Color(149, 219, 0)
+        },
+        label = "SearchView background"
+    )
+
+    Row (
+        modifier = modifier
+            .background(background),
+        horizontalArrangement = Arrangement.End
+    ){
+        IconButton(
+            onClick = {}
+        ){
+            Icon(Icons.Default.Search, contentDescription = "Search recipe button")
+        }
+    }
+}
+
+
+
 
 @Composable
 fun MainScreenFloatingButton(
@@ -145,7 +209,8 @@ fun MainScreenFloatingButton(
 
 @Composable
 fun MainContent(
-    modifier: Modifier
+    modifier: Modifier,
+    contentListState: LazyListState
 ){
 
     val gradientBrush = remember {
@@ -154,8 +219,6 @@ fun MainContent(
             1.0f to Color(84, 168, 148),
         )
     }
-
-    val contentListState = rememberLazyListState()
 
     val tittleVisibilityState = remember {
         derivedStateOf {
@@ -186,7 +249,7 @@ fun MainContent(
     Box(
         modifier = modifier
             .graphicsLayer {
-                this.translationY = 300f - 300f * deskSizeAnimation
+                this.translationY = 150f - 150f * deskSizeAnimation
             }
             .background(
                 gradientBrush,
@@ -198,7 +261,7 @@ fun MainContent(
             .fillMaxWidth(),
         contentAlignment = Alignment.TopCenter
     ) {
-        ContentTittle(scrollState = tittleVisibilityState)
+        ContentTittle(scrollState = { tittleVisibilityState.value })
         RecipesList(
             modifier = Modifier,
             listState = contentListState
@@ -208,20 +271,18 @@ fun MainContent(
 
 @Composable
 fun ContentTittle(
-    scrollState: State<Int>
+    scrollState: () -> Int
 ){
-
-    val interpolator = lerp(1.dp, 0.dp, scrollState.value / 100f).value
-
     Text(
         modifier = Modifier
             .graphicsLayer {
+                val interpolator = lerp(1.dp, 0.dp, scrollState() / 100f).value
                 val scale = if (interpolator > 0.8f) interpolator else 0.8f
                 this.scaleY = scale
                 this.scaleX = scale
+                this.alpha = interpolator
             }
-            .padding(top = 16.dp)
-            .alpha(interpolator),
+            .padding(top = 16.dp),
         text = "Recipes",
         fontSize = 38.sp,
         color = Color.White,
