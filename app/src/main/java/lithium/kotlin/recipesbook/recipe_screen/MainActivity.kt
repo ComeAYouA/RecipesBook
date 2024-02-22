@@ -8,7 +8,12 @@ import androidx.activity.viewModels
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.MutatePriority
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusGroup
+import androidx.compose.foundation.focusable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,6 +43,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -47,17 +53,23 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.rotary.onRotaryScrollEvent
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.unit.sp
@@ -92,8 +104,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-
-        viewModel.loadRandomRecipes()
     }
 }
 
@@ -131,14 +141,16 @@ fun RecipeScreen(
             TopBar(
                 modifier = Modifier
                     .fillMaxWidth(),
-                isVisible = { deskFullScreen.value }
+                isVisible = { deskFullScreen.value },
+                onSearchQueryChanged = {query -> viewModel.searchRecipes(query) },
             )
 
             MainContent(
                 modifier = Modifier,
                 uiState = uiState.value,
-                contentListState,
-                deskFullScreen = { deskFullScreen.value }
+                contentListState = contentListState,
+                deskFullScreen = { deskFullScreen.value },
+                onRetryButtonClicked = { viewModel.loadRandomRecipes() },
             )
         }
 
@@ -175,26 +187,21 @@ fun MainScreenBackgroundImage(
 @Composable
 fun TopBar(
     modifier: Modifier = Modifier,
-    isVisible: () -> Boolean
+    isVisible: () -> Boolean,
+    onSearchQueryChanged: (String) -> Unit,
 ){
+    val focused = remember {
+        mutableStateOf(false)
+    }
+
     val background by animateColorAsState(
-        targetValue = if (!isVisible()){
-            Color.Transparent
-        } else {
+        targetValue = if (!(isVisible() || focused.value)){
+                Color.Transparent
+            } else {
             MaterialTheme.colorScheme.surface
         },
         label = "SearchView background"
     )
-
-    val visibilityState by animateFloatAsState(
-        targetValue = if (isVisible()){
-            1f
-        }else {
-            0f
-        },
-        label = "searchBarVisibility animation"
-    )
-
 
 
     Box(
@@ -206,47 +213,72 @@ fun TopBar(
     ){
         SearchBar(
             modifier = Modifier
-                .graphicsLayer {
-                    this.alpha = visibilityState
-                }
                 .fillMaxWidth()
                 .padding(8.dp),
-            isVisible
+            isVisible = isVisible,
+            onSearchQueryChanged = onSearchQueryChanged,
+            focus = focused,
         )
     }
 }
 
-@Preview
 @Composable
 fun SearchBar(
     modifier: Modifier = Modifier,
-    isVisible: () -> Boolean = { true }
+    isVisible: () -> Boolean = { true },
+    onSearchQueryChanged: (String) -> Unit,
+    focus: MutableState<Boolean>,
 ){
-
-    val searchText = rememberSaveable {
-        mutableStateOf("")
-    }
-
-    val focus: FocusRequester = remember{
+    val focusRequester = remember {
         FocusRequester()
     }
 
+    val focusManager = LocalFocusManager.current
+
+    val textFieldIsVisible = remember {
+        derivedStateOf {
+            isVisible() || focus.value
+        }
+    }
+
+    val visibilityState by animateFloatAsState(
+        targetValue = if (textFieldIsVisible.value){
+            1f
+        }else {
+            0f
+        },
+        label = "searchBarVisibility animation"
+    )
+
+    val searchQuery = rememberSaveable {
+        mutableStateOf("")
+    }
 
     Row(
         modifier = modifier
     ) {
         BasicTextField(
             modifier = Modifier
+                .graphicsLayer {
+                    this.alpha = visibilityState
+                }
                 .padding(start = 10.dp)
                 .background(Color.White, RoundedCornerShape(18.dp))
                 .padding(8.dp)
                 .fillMaxWidth(0.84f)
-                .focusRequester(focus),
-            value = searchText.value,
-            onValueChange = { searchText.value = it},
+                .focusable()
+                .focusRequester(focusRequester)
+                .onFocusChanged { focusState ->
+                    focus.value = focusState.isFocused
+                    Log.d("myTag", focusState.isFocused.toString())
+                },
+            value = searchQuery.value,
+            onValueChange = {
+                searchQuery .value = it
+                onSearchQueryChanged(it)
+            },
             singleLine = true,
-            enabled = isVisible(),
-            textStyle = TextStyle().copy(fontSize = 18.sp)
+            textStyle = TextStyle().copy(fontSize = 18.sp),
         )
 
         IconButton(
@@ -254,7 +286,9 @@ fun SearchBar(
                 .padding(start = 10.dp)
                 .size(38.dp)
                 .align(Alignment.CenterVertically),
-            onClick = { focus.requestFocus() }
+            onClick = {
+                if (focus.value) focusManager.clearFocus() else focusRequester.requestFocus()
+            }
         ) {
             Icon(
                 Icons.Default.Search,
@@ -263,8 +297,6 @@ fun SearchBar(
         }
     }
 }
-
-
 
 
 @Composable
@@ -320,7 +352,8 @@ fun MainContent(
     modifier: Modifier,
     uiState: RecipeScreenUiState,
     contentListState: LazyListState,
-    deskFullScreen: () -> Boolean
+    deskFullScreen: () -> Boolean,
+    onRetryButtonClicked: () -> Unit,
 ){
 
     val surfaceColor = MaterialTheme.colorScheme.surface
@@ -376,10 +409,17 @@ fun MainContent(
                 RecipesList(
                     content = uiState.data,
                     modifier = Modifier,
-                    listState = contentListState
+                    listState = contentListState,
                 )
             }
-            else -> {}
+            is RecipeScreenUiState.Error -> {
+                ErrorMessage(
+                    modifier = Modifier
+                        .align(Alignment.Center),
+                    message = uiState.message,
+                    onRetryButtonClicked = onRetryButtonClicked
+                )
+            }
         }
 
     }
@@ -410,7 +450,7 @@ fun ContentTittle(
 fun RecipesList(
     content: List<RecipeResource>,
     modifier: Modifier,
-    listState: LazyListState
+    listState: LazyListState,
 ){
     LazyColumn(
         modifier = modifier,
@@ -559,7 +599,7 @@ fun RecipeAdditionalInfo(
         )
         DishTypes(
             modifier = Modifier
-                .padding(start =  10.dp)
+                .padding(start = 10.dp)
                 .align(Alignment.CenterVertically),
             content = dishTypes
         )
@@ -637,6 +677,33 @@ fun TimeAmount(
         fontWeight = FontWeight.Bold,
         fontSize = 10.sp,
     )
+}
+
+@Composable
+fun ErrorMessage(
+    modifier: Modifier = Modifier,
+    message: String,
+    onRetryButtonClicked: () -> Unit = {}
+){
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = message,
+            fontSize = 24.sp,
+            textAlign = TextAlign.Center
+        )
+
+        Button(
+            onClick = onRetryButtonClicked
+        ) {
+            Text(
+                text = "Retry",
+                color = Color.White
+            )
+        }
+    }
 }
 
 
