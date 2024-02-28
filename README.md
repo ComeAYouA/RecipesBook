@@ -60,7 +60,7 @@ for working with images in Compose</h3></li>
     <hr/>
   
   <h2 align="center">Module dependency diagram</h2>
-  <img src = "https://github.com/ComeAYouA/RecipesBook/blob/main/preview/modules.png" />
+  <img align="center" max-width= "50%" src = "https://github.com/ComeAYouA/RecipesBook/blob/main/preview/modules.png" />
  
   <hr/>
   
