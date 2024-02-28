@@ -25,9 +25,9 @@
   - Clean Architecture
   - S.O.L.I.D
 
-  ## Module dependency diagram
+  ## Module dependency diagram (for now)
   ![](https://github.com/ComeAYouA/RecipesBook/blob/main/preview/modules.png)
  
-  ## App preview
+  ## App preview (for now)
   ![](https://github.com/ComeAYouA/RecipesBook/blob/main/app_preview.gif)
  
