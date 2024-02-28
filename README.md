@@ -1,3 +1,4 @@
+
   # RecipeBook Android App
   
   ## Introduction
@@ -25,8 +26,8 @@
   - S.O.L.I.D
 
   ## Module dependency diagram
-  [](https://github.com/ComeAYouA/RecipesBook/blob/main/preview/modules.png)
+  ![](https://github.com/ComeAYouA/RecipesBook/blob/main/preview/modules.png)
  
   ## App preview
-  [](https://github.com/ComeAYouA/RecipesBook/blob/main/app_preview.gif)
+  ![](https://github.com/ComeAYouA/RecipesBook/blob/main/app_preview.gif)
  
