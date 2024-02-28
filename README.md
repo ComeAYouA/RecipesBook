@@ -65,7 +65,7 @@ for working with images in Compose</h3></li>
   <hr/>
   
   <h2 align="center">App preview</h2>
-  <img src = "https://github.com/ComeAYouA/RecipesBook/blob/main/app_preview.gif" />
+  <img align="center" src = "https://github.com/ComeAYouA/RecipesBook/blob/main/app_preview.gif" />
   
   
 </html>
