@@ -5,6 +5,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class SearchRecipesResponse (
-    @SerialName("result")
+    @SerialName("results")
     val recipes: List<NetworkRecipeResource>
 )
