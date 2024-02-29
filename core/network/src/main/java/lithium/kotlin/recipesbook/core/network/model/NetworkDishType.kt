@@ -44,7 +44,7 @@ enum class NetworkDishType {
     Unknown
 }
 
-fun NetworkDishType.asExternalEntity(): DishType =
+fun NetworkDishType.asExternalModel(): DishType =
     when(this){
         NetworkDishType.MainCourse -> DishType.MainCourse
         NetworkDishType.Appetizer -> DishType.Appetizer
@@ -63,9 +63,9 @@ fun NetworkDishType.asExternalEntity(): DishType =
         NetworkDishType.Unknown -> DishType.Unknown
     }
 
-val NetworkDishType.serialName: String
+internal val NetworkDishType.serialName: String
     get() = this::class.java.getField(this.name).getAnnotation(SerialName::class.java)!!.value
-object DishTypeSerializer : KSerializer<NetworkDishType> {
+internal object DishTypeSerializer : KSerializer<NetworkDishType> {
     private val className = this::class.qualifiedName!!
     private val lookup = NetworkDishType.values().associateBy({ it }, { it.serialName })
     private val revLookup = NetworkDishType.values().associateBy { it.serialName }

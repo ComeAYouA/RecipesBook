@@ -15,7 +15,7 @@ import retrofit2.Retrofit
 
 @Module
 @InstallIn(SingletonComponent::class)
-interface NetworkModule{
+internal interface NetworkModule{
 
     @Binds
     fun bindRecipeApiImpl_to_RecipeApi(input: RecipesApiImpl): RecipesApi

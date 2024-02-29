@@ -1,5 +1,6 @@
 package lithium.kotlin.recipesbook.feature.feed
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -10,20 +11,29 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import lithium.kotlin.recipesbook.core.domain.AddBookmarkedRecipeUseCase
+import lithium.kotlin.recipesbook.core.domain.DeleteBookmarkedRecipeUseCase
+import lithium.kotlin.recipesbook.core.domain.LoadBookmarkedRecipes
 import lithium.kotlin.recipesbook.core.domain.LoadRandomRecipesUseCase
 import lithium.kotlin.recipesbook.core.domain.SearchRecipesUseCase
-import lithium.kotlin.recipesbook.core.model.Recipe
 import lithium.kotlin.recipesbook.core.model.Result
 import javax.inject.Inject
 
 @HiltViewModel
 class RecipesFeedViewModel @Inject constructor(
     private val loadRandomRecipesUseCase: LoadRandomRecipesUseCase,
-    private val searchRecipesUseCase: SearchRecipesUseCase
+    private val searchRecipesUseCase: SearchRecipesUseCase,
+    private val loadBookmarkedRecipes: LoadBookmarkedRecipes,
+    private val addBookmarkedRecipeUseCase: AddBookmarkedRecipeUseCase,
+    private val deleteBookmarkedRecipeUseCase: DeleteBookmarkedRecipeUseCase
 ): ViewModel() {
 
-    val uiState: MutableStateFlow<RecipeScreenUiState> =
-        MutableStateFlow(RecipeScreenUiState.Loading)
+    internal val contentUiState: MutableStateFlow<RecipesFeedContentUiState> =
+        MutableStateFlow(RecipesFeedContentUiState.Loading)
+
+    internal val screenUiState: MutableStateFlow<RecipeScreenUiState> =
+        MutableStateFlow(RecipeScreenUiState(content = Content.InterestingRecipes))
+
     private val requestsContext = SupervisorJob() + Dispatchers.IO
 
     init {
@@ -33,21 +43,22 @@ class RecipesFeedViewModel @Inject constructor(
     fun loadRandomRecipes() {
         viewModelScope.launch {
 
-            uiState.update {
-                RecipeScreenUiState.Loading
+            contentUiState.update {
+                RecipesFeedContentUiState.Loading
             }
 
             val requestResult = loadRandomRecipesUseCase()
 
-            uiState.update {
-                when(requestResult){
+            contentUiState.update {
+                when (requestResult) {
                     is Result.Success -> {
-                        RecipeScreenUiState.Success(
-                            requestResult.data
+                        RecipesFeedContentUiState.Success(
+                            data = requestResult.data
                         )
                     }
+
                     is Result.Error -> {
-                        RecipeScreenUiState.Error(
+                        RecipesFeedContentUiState.Error(
                             requestResult.message
                         )
                     }
@@ -55,33 +66,35 @@ class RecipesFeedViewModel @Inject constructor(
             }
         }
     }
+
     fun searchRecipes(query: String) {
 
-        uiState.update {
-            RecipeScreenUiState.Loading
-        }
-
-        if (query == ""){
-            loadRandomRecipes()
-            return
+        contentUiState.update {
+            RecipesFeedContentUiState.Loading
         }
 
         requestsContext.cancelChildren()
 
+        if (query == "") {
+            loadRandomRecipes()
+            return
+        }
+
         viewModelScope.launch(requestsContext) {
             delay(1000)
 
-            val requestResult = searchRecipesUseCase(query =  query)
+            val requestResult = searchRecipesUseCase(query = query)
 
-            uiState.update {
-                when(requestResult){
+            contentUiState.update {
+                when (requestResult) {
                     is Result.Success -> {
-                        RecipeScreenUiState.Success(
-                            requestResult.data
+                        RecipesFeedContentUiState.Success(
+                            data = requestResult.data
                         )
                     }
+
                     is Result.Error -> {
-                        RecipeScreenUiState.Error(
+                        RecipesFeedContentUiState.Error(
                             requestResult.message
                         )
                     }
@@ -89,16 +102,44 @@ class RecipesFeedViewModel @Inject constructor(
             }
         }
     }
-}
 
+    fun bookmarkRecipe(recipeId: Long) {
+        viewModelScope.launch {
+            addBookmarkedRecipeUseCase(recipeId)
+        }
+    }
 
+    fun unbookmarkRecipe(recipeId: Long) {
+        viewModelScope.launch {
+            deleteBookmarkedRecipeUseCase(recipeId)
+        }
+    }
 
-sealed interface RecipeScreenUiState {
-    object Loading : RecipeScreenUiState
-    data class Success(
-        val data: List<Recipe>
-    ) : RecipeScreenUiState
-    data class Error(
-        val message: String
-    ) : RecipeScreenUiState
+    fun loadBookmarks() {
+        viewModelScope.launch {
+            screenUiState.update {
+                RecipeScreenUiState(
+                    content = Content.FavoriteRecipes
+                )
+            }
+
+            val requestResult = loadBookmarkedRecipes()
+
+            contentUiState.update {
+                when (requestResult) {
+                    is Result.Success -> {
+                        RecipesFeedContentUiState.Success(
+                            data = requestResult.data
+                        )
+                    }
+
+                    is Result.Error -> {
+                        RecipesFeedContentUiState.Error(
+                            requestResult.message
+                        )
+                    }
+                }
+            }
+        }
+    }
 }

@@ -1,5 +1,6 @@
 package lithium.kotlin.recipesbook.core.network
 
+import lithium.kotlin.recipesbook.core.network.model.NetworkRecipeResource
 import lithium.kotlin.recipesbook.core.network.model.RandomRecipesResponse
 import lithium.kotlin.recipesbook.core.network.model.SearchRecipesResponse
 import retrofit2.http.GET
@@ -16,5 +17,14 @@ interface RecipesApi {
 
     @Headers("x-api-key: $API_KEY")
     @GET("recipes/complexSearch")
-    suspend fun searchRecipes(@Query("query") query: String, @Query("addRecipeInformation") recipeInformation: Boolean = true): SearchRecipesResponse
+    suspend fun searchRecipes(
+        @Query("query") query: String,
+        @Query("addRecipeInformation") recipeInformation: Boolean = true
+    ): SearchRecipesResponse
+
+    @Headers("x-api-key: $API_KEY")
+    @GET("recipes/informationBulk")
+    suspend fun getRecipesByIds(
+        @Query("ids") ids: List<String>,
+    ): List<NetworkRecipeResource>
 }

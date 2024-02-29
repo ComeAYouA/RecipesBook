@@ -2,7 +2,9 @@ package lithium.kotlin.recipesbook.feature.feed
 
 import android.util.Log
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
@@ -23,6 +25,8 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -34,6 +38,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
@@ -43,6 +48,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -52,6 +58,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -73,7 +80,8 @@ import lithium.kotlin.recipesbook.core.ui.extension.convertToResource
 fun RecipeScreen(
     viewModel: RecipesFeedViewModel
 ){
-    val uiState = viewModel.uiState.collectAsState()
+    val contentUiState = viewModel.contentUiState.collectAsState()
+    val screenUiState = viewModel.screenUiState.collectAsState()
 
     val contentListState = rememberLazyListState()
 
@@ -107,10 +115,19 @@ fun RecipeScreen(
 
             MainContent(
                 modifier = Modifier,
-                uiState = uiState.value,
+                screenUiState = screenUiState.value,
+                contentUiState = contentUiState.value,
                 contentListState = contentListState,
                 deskFullScreen = { deskFullScreen.value },
                 onRetryButtonClicked = { viewModel.loadRandomRecipes() },
+                onRecipeBookmarked = {id, isBookMarked ->
+                    if (isBookMarked) {
+                        viewModel.bookmarkRecipe(id)
+                    } else {
+                        viewModel.unbookmarkRecipe(id)
+                    }
+                },
+                navigateToBookmarks = { viewModel.loadBookmarks() }
             )
         }
 
@@ -126,7 +143,7 @@ fun RecipeScreen(
 }
 
 @Composable
-fun MainScreenBackgroundImage(
+internal fun MainScreenBackgroundImage(
     modifier: Modifier = Modifier
 ){
     Image(
@@ -145,7 +162,7 @@ fun MainScreenBackgroundImage(
 
 
 @Composable
-fun TopBar(
+internal fun TopBar(
     modifier: Modifier = Modifier,
     isVisible: () -> Boolean,
     onSearchQueryChanged: (String) -> Unit,
@@ -183,7 +200,7 @@ fun TopBar(
 }
 
 @Composable
-fun SearchBar(
+internal fun SearchBar(
     modifier: Modifier = Modifier,
     isVisible: () -> Boolean = { true },
     onSearchQueryChanged: (String) -> Unit,
@@ -260,7 +277,7 @@ fun SearchBar(
 
 
 @Composable
-fun MainScreenFloatingButton(
+internal fun MainScreenFloatingButton(
     modifier: Modifier,
 ){
 
@@ -308,13 +325,28 @@ fun MainScreenFloatingButton(
 
 
 @Composable
-fun MainContent(
+internal fun MainContent(
     modifier: Modifier,
-    uiState: lithium.kotlin.recipesbook.feature.feed.RecipeScreenUiState,
+    screenUiState: RecipeScreenUiState,
+    contentUiState: RecipesFeedContentUiState,
     contentListState: LazyListState,
     deskFullScreen: () -> Boolean,
     onRetryButtonClicked: () -> Unit,
+    onRecipeBookmarked: (Long, Boolean) -> Unit,
+    navigateToBookmarks: () -> Unit
 ){
+
+
+    val windowHeight = LocalContext.current.resources.displayMetrics.heightPixels
+
+    val translationY = remember {
+        Animatable(windowHeight + 150f)
+    }
+
+    LaunchedEffect(key1 = screenUiState.content){
+        translationY.animateTo(windowHeight + 150f)
+        translationY.animateTo(0f)
+    }
 
     val surfaceColor = MaterialTheme.colorScheme.surface
     val surfaceVariant = MaterialTheme.colorScheme.surfaceVariant
@@ -336,8 +368,7 @@ fun MainContent(
         }
     }
 
-
-    val deskSizeAnimation by animateFloatAsState(
+    val deskFullScreenState by animateFloatAsState(
         targetValue = if (deskFullScreen()) 1f else 0f,
         label = ""
     )
@@ -346,37 +377,53 @@ fun MainContent(
     Box(
         modifier = modifier
             .graphicsLayer {
-                this.translationY = 150f - 150f * deskSizeAnimation
+                this.translationY = translationY.value + 150f - 150f * deskFullScreenState
             }
             .background(
                 gradientBrush,
                 RoundedCornerShape(
-                    topStart = lerp(26.dp, 0.dp, deskSizeAnimation),
-                    topEnd = lerp(26.dp, 0.dp, deskSizeAnimation)
+                    topStart = lerp(26.dp, 0.dp, deskFullScreenState),
+                    topEnd = lerp(26.dp, 0.dp, deskFullScreenState)
                 )
             )
             .fillMaxSize(),
         contentAlignment = Alignment.TopCenter
     ) {
-        ContentTittle(scrollState = { tittleVisibilityState.value })
 
-        when(uiState){
-            is RecipeScreenUiState.Loading -> CircularProgressIndicator(
+        NavigationButton(
+            modifier = Modifier
+                .graphicsLayer {
+                    this.alpha = 1 - deskFullScreenState
+                }
+                .padding(10.dp)
+                .align(Alignment.TopEnd)
+                .size(36.dp),
+            deskFullScreen = deskFullScreen,
+            navigateToBookmarks = navigateToBookmarks
+        )
+
+        when(contentUiState){
+            is RecipesFeedContentUiState.Loading -> CircularProgressIndicator(
                 modifier = Modifier
                     .align(Alignment.Center)
             )
-            is RecipeScreenUiState.Success -> {
+            is RecipesFeedContentUiState.Success -> {
+                ContentTittle(
+                    screenUiState,
+                    scrollState = { tittleVisibilityState.value }
+                )
                 RecipesList(
-                    content = uiState.data,
+                    content = contentUiState.data,
                     modifier = Modifier,
                     listState = contentListState,
+                    onRecipeBookmarked = onRecipeBookmarked
                 )
             }
-            is RecipeScreenUiState.Error -> {
+            is RecipesFeedContentUiState.Error -> {
                 ErrorMessage(
                     modifier = Modifier
                         .align(Alignment.Center),
-                    message = uiState.message,
+                    message = contentUiState.message,
                     onRetryButtonClicked = onRetryButtonClicked
                 )
             }
@@ -387,9 +434,30 @@ fun MainContent(
 }
 
 @Composable
-fun ContentTittle(
+fun NavigationButton(
+    modifier: Modifier,
+    deskFullScreen: () -> Boolean,
+    navigateToBookmarks: () -> Unit
+) {
+
+    IconButton(
+        modifier = modifier,
+        enabled = !deskFullScreen(),
+        onClick = navigateToBookmarks
+    ) {
+        Icon(painter = painterResource(
+            id = R.drawable.ic_bookmark
+        ), contentDescription = "navigate to bookmarks"
+        )
+    }
+}
+
+@Composable
+internal fun ContentTittle(
+    screenUiState: RecipeScreenUiState,
     scrollState: () -> Int
 ){
+
     Text(
         modifier = Modifier
             .graphicsLayer {
@@ -399,39 +467,45 @@ fun ContentTittle(
                 this.scaleX = scale
                 this.alpha = interpolator
             }
-            .padding(top = 16.dp),
-        text = "Recipes",
-        fontSize = 38.sp,
+            .padding(top = 46.dp),
+        text = screenUiState.content.tittle,
+        fontSize = 28.sp,
         color = Color.White,
     )
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun RecipesList(
+internal fun RecipesList(
     content: List<Recipe>,
     modifier: Modifier,
     listState: LazyListState,
+    onRecipeBookmarked: (Long, Boolean) -> Unit
 ){
     LazyColumn(
         modifier = modifier,
-        contentPadding = PaddingValues(vertical = 52.dp),
+        contentPadding = PaddingValues(vertical = 68.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         state = listState
     ){
         items(content){ recipe ->
             RecipeItem(
                 recipe = recipe,
-                modifier = Modifier.padding(top = 36.dp)
+                modifier = Modifier
+                    .padding(top = 36.dp),
+                onRecipeBookmarked = onRecipeBookmarked
             )
         }
     }
 }
 
 @Composable
-fun RecipeItem(
+internal fun RecipeItem(
     recipe: Recipe,
-    modifier: Modifier
+    modifier: Modifier,
+    onRecipeBookmarked: (Long, Boolean) -> Unit
 ){
+
     Card(
         modifier = modifier
             .height(216.dp)
@@ -457,20 +531,59 @@ fun RecipeItem(
                     )
                     .align(Alignment.BottomStart)
             )
+            BookMark(
+                isBookmarked = recipe.isBookmarked,
+                recipeId = recipe.id,
+                modifier = Modifier
+                    .padding(7.dp)
+                    .align(Alignment.TopEnd),
+                onRecipeBookmarked = onRecipeBookmarked
+            )
         }
+    }
+}
+
+@Composable
+fun BookMark(
+    isBookmarked: Boolean,
+    recipeId: Long,
+    modifier: Modifier,
+    onRecipeBookmarked: (Long, Boolean) -> Unit
+) {
+    val isBookmarked = remember {
+        mutableStateOf(isBookmarked)
+    }
+
+    IconButton(
+        modifier = modifier,
+        onClick = {
+            isBookmarked.value = !isBookmarked.value
+            onRecipeBookmarked(recipeId, isBookmarked.value)
+        },
+    ) {
+        Icon(
+            modifier = Modifier.size(32.dp),
+            imageVector = if (isBookmarked.value) {
+                Icons.Default.Favorite
+            }else {
+                Icons.Default.FavoriteBorder
+            },
+            tint = if (isBookmarked.value) Color.Red else Color.White,
+            contentDescription = "bookmark"
+        )
     }
 }
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-fun RecipeCardBackground(
+internal fun RecipeCardBackground(
     imageUrl: String?
 ){
     val backgroundColor = MaterialTheme.colorScheme.background
 
     val whiteGradient = remember {
         Brush.verticalGradient(
-            0.0f to Color.Transparent,
+            0.0f to Color(0,0,0,20),
             0.84f to backgroundColor
         )
     }
@@ -490,7 +603,7 @@ fun RecipeCardBackground(
 }
 
 @Composable
-fun RecipeTittle(
+internal fun RecipeTittle(
     tittle: String,
     modifier: Modifier
 ){
@@ -505,7 +618,7 @@ fun RecipeTittle(
 }
 
 @Composable
-fun RecipeInfo(
+internal fun RecipeInfo(
     recipe: Recipe,
     modifier: Modifier
 ){
@@ -528,7 +641,7 @@ fun RecipeInfo(
 
 
 @Composable
-fun RecipeAdditionalInfo(
+internal fun RecipeAdditionalInfo(
     rating: Int?,
     dishTypes: List<DishType?>,
     readyInMinutes: Int?,
@@ -567,7 +680,7 @@ fun RecipeAdditionalInfo(
 }
 
 @Composable
-fun DishTypes(
+internal fun DishTypes(
     modifier: Modifier = Modifier,
     content: List<DishType?>
 ){
@@ -591,7 +704,7 @@ fun DishTypes(
 }
 
 @Composable
-fun RecipeRatingIcon(
+internal fun RecipeRatingIcon(
     modifier: Modifier = Modifier
 ){
     Image(
@@ -603,7 +716,7 @@ fun RecipeRatingIcon(
 }
 
 @Composable
-fun RecipeRatingAmount(
+internal fun RecipeRatingAmount(
     rating: Int?,
     modifier: Modifier = Modifier
 ){
@@ -616,7 +729,7 @@ fun RecipeRatingAmount(
 }
 
 @Composable
-fun TimeIcon(
+internal fun TimeIcon(
     modifier: Modifier = Modifier
 ){
     Image(
@@ -628,7 +741,7 @@ fun TimeIcon(
 }
 
 @Composable
-fun TimeAmount(
+internal fun TimeAmount(
     minutes: Int?,
     modifier: Modifier = Modifier
 ){
@@ -641,7 +754,7 @@ fun TimeAmount(
 }
 
 @Composable
-fun ErrorMessage(
+internal fun ErrorMessage(
     modifier: Modifier = Modifier,
     message: String,
     onRetryButtonClicked: () -> Unit = {}

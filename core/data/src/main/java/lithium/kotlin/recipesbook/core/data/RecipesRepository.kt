@@ -8,5 +8,7 @@ interface RecipesRepository {
 
     suspend fun searchRecipes(query: String): List<Recipe>
 
-
+    suspend fun getBookmarkedRecipes(): List<Recipe>
+    suspend fun deleteBookmarkedRecipe(recipeId: Long)
+    suspend fun addBookmarkedRecipe(recipesId: Long)
 }

@@ -20,12 +20,12 @@ data class NetworkRecipeResource(
     val score: Double?
 )
 
-fun NetworkRecipeResource.asExternalEntity(): Recipe =
+fun NetworkRecipeResource.asExternalModel(): Recipe =
     Recipe(
         id = id,
         tittle = tittle,
         imageUrl = imageUrl,
         cookingTimeMinutes = cookingTimeMinutes,
-        dishTypes = dishTypes.map { dishType -> dishType?.asExternalEntity() },
+        dishTypes = dishTypes.map { dishType -> dishType?.asExternalModel() },
         score = score
     )
