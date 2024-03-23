@@ -9,9 +9,9 @@ import javax.inject.Inject
 class DeleteBookmarkedRecipeUseCase @Inject constructor(
     private val recipesRepository: RecipesRepository
 ) {
-    suspend operator fun invoke(recipesId: Long) {
+    suspend operator fun invoke(recipe: Recipe) {
         try {
-            recipesRepository.deleteBookmarkedRecipe(recipesId)
+            recipesRepository.deleteBookmarkedRecipe(recipe)
         } catch (e: Exception) {
             Log.d("myTag", e.message.toString())
         }

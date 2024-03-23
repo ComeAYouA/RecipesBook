@@ -17,7 +17,7 @@ internal class RecipesApiImpl @Inject constructor(
     override suspend fun searchRecipes(query: String, recipeInformation: Boolean): SearchRecipesResponse =
         recipeApi. searchRecipes(query)
 
-    override suspend fun getRecipesByIds(ids: List<String>): List<NetworkRecipeResource> =
+    override suspend fun getRecipesByIds(ids: String): List<NetworkRecipeResource> =
         recipeApi.getRecipesByIds(ids)
 
 }

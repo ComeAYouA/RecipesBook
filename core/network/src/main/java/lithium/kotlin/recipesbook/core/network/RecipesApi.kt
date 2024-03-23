@@ -22,9 +22,12 @@ interface RecipesApi {
         @Query("addRecipeInformation") recipeInformation: Boolean = true
     ): SearchRecipesResponse
 
+
+
+    // format of ids parameter: id1, id2, id3 (A comma-separated list of recipe ids.)
     @Headers("x-api-key: $API_KEY")
     @GET("recipes/informationBulk")
     suspend fun getRecipesByIds(
-        @Query("ids") ids: List<String>,
+        @Query("ids") ids: String,
     ): List<NetworkRecipeResource>
 }

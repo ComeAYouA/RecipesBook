@@ -3,8 +3,10 @@ package lithium.kotlin.recipesbook.feature.feed
 import android.util.Log
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.EaseInOutQuint
+import androidx.compose.animation.core.EaseOutQuad
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
@@ -40,6 +42,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -48,17 +51,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -76,415 +78,438 @@ import lithium.kotlin.recipesbook.core.model.description
 import lithium.kotlin.recipesbook.core.ui.R
 import lithium.kotlin.recipesbook.core.ui.extension.convertToResource
 
-@Composable
-fun RecipeScreen(
-    viewModel: RecipesFeedViewModel
-){
-    val contentUiState = viewModel.contentUiState.collectAsState()
-    val screenUiState = viewModel.screenUiState.collectAsState()
+//@Composable
+//fun RecipeScreen(
+//    viewModel: RecipesFeedViewModel
+//){
+//    val screenUiState = viewModel.screenUiState.collectAsState()
+//
+//    val contentListState = rememberLazyListState()
+//
+//    val deskFullScreen = remember {
+//        derivedStateOf {
+//            if (contentListState.firstVisibleItemIndex == 0){
+//                contentListState.firstVisibleItemScrollOffset > 200f
+//            } else {
+//                true
+//            }
+//        }
+//    }
+//
+//    Box(
+//        modifier = Modifier
+//            .background(Color.White)
+//            .fillMaxSize(),
+//    ){
+//
+//        MainScreenBackgroundImage(
+//            modifier = Modifier.fillMaxWidth()
+//        )
+//
+//        Column {
+//            TopBar(
+//                modifier = Modifier
+//                    .fillMaxWidth(),
+//                isVisible = deskFullScreen,
+//                onSearchQueryChanged = {query ->
+//                    when(screenUiState.value.content){
+//                        RecipeFeedContent.InterestingRecipes, RecipeFeedContent.FoundRecipes -> {
+//                            viewModel.searchRandomRecipes(query)
+//                        }
+//                        RecipeFeedContent.FavoriteRecipes -> {
+//                            viewModel.searchBookmarkedRecipes(query)
+//                        }
+//                    }
+//                },
+//            )
+//
+//            MainContent(
+//                screenUiState = screenUiState.value,
+//                contentUiState = screenUiState.value.contentState,
+//                contentListState = contentListState,
+//                deskFullScreen = { deskFullScreen.value },
+//                onRetryButtonClicked = { viewModel.loadRandomRecipes() },
+//                onRecipeBookmarked = {recipe, isBookMarked ->
+//                    if (isBookMarked) {
+//                        viewModel.bookmarkRecipe(recipe)
+//                    } else {
+//                        viewModel.unbookmarkRecipe(recipe)
+//                    }
+//                },
+//            )
+//        }
+//
+//        MainScreenFloatingButton(
+//            modifier = Modifier
+//                .align(Alignment.BottomEnd)
+//                .padding(
+//                    end = 16.dp,
+//                    bottom = 26.dp
+//                ),
+//            screenUiState = screenUiState.value,
+//            onClick = {
+//                when(screenUiState.value.content){
+//                    RecipeFeedContent.InterestingRecipes, RecipeFeedContent.FoundRecipes -> {
+//                        viewModel.loadBookmarks()
+//                    }
+//                    RecipeFeedContent.FavoriteRecipes -> {
+//                        viewModel.loadRandomRecipes()
+//                    }
+//                }
+//            }
+//        )
+//    }
+//}
+//
+//@Composable
+//internal fun MainScreenBackgroundImage(
+//    modifier: Modifier = Modifier
+//){
+//    Image(
+//        modifier = modifier,
+//        painter = painterResource(id = if (isSystemInDarkTheme()) {
+//            R.drawable.recipe_background_dark
+//        } else {
+//            R.drawable.recipe_background
+//        }
+//        ),
+//        contentDescription = "",
+//        contentScale = ContentScale.FillBounds
+//    )
+//}
+//
+//
+//
+//@Composable
+//internal fun TopBar(
+//    modifier: Modifier = Modifier,
+//    isVisible: State<Boolean>,
+//    onSearchQueryChanged: (String) -> Unit,
+//){
+//    val focused = remember {
+//        mutableStateOf(false)
+//    }
+//
+//    val background by animateColorAsState(
+//        targetValue = if (!(isVisible.value|| focused.value)){
+//            Color.Transparent
+//        } else {
+//            MaterialTheme.colorScheme.surface
+//        },
+//        label = "SearchView background"
+//    )
+//
+//
+//    Box(
+//        modifier = modifier
+//            .drawWithContent {
+//                drawRect(background)
+//                drawContent()
+//            }
+//    ){
+//        SearchBar(
+//            modifier = Modifier
+//                .fillMaxWidth()
+//                .padding(8.dp),
+//            isVisible = isVisible,
+//            onSearchQueryChanged = onSearchQueryChanged,
+//            focus = focused,
+//        )
+//    }
+//}
+//
+//@Composable
+//internal fun SearchBar(
+//    modifier: Modifier = Modifier,
+//    isVisible: State<Boolean>,
+//    onSearchQueryChanged: (String) -> Unit,
+//    focus: MutableState<Boolean>,
+//){
+//    val focusRequester = remember {
+//        FocusRequester()
+//    }
+//
+//    val focusManager = LocalFocusManager.current
+//
+//    val textFieldIsVisible = remember {
+//        derivedStateOf {
+//            isVisible.value || focus.value
+//        }
+//    }
+//
+//    val visibilityState by animateFloatAsState(
+//        targetValue = if (textFieldIsVisible.value){
+//            1f
+//        }else {
+//            0f
+//        },
+//        label = "searchBarVisibility animation"
+//    )
+//
+//    val searchQuery = rememberSaveable {
+//        mutableStateOf("")
+//    }
+//
+//    Row(
+//        modifier = modifier
+//    ) {
+//        BasicTextField(
+//            modifier = Modifier
+//                .graphicsLayer {
+//                    this.alpha = visibilityState
+//                }
+//                .padding(start = 10.dp)
+//                .background(Color.White, RoundedCornerShape(18.dp))
+//                .padding(8.dp)
+//                .fillMaxWidth(0.84f)
+//                .focusable()
+//                .focusRequester(focusRequester)
+//                .onFocusChanged { focusState ->
+//                    focus.value = focusState.isFocused
+//                    Log.d("myTag", focusState.isFocused.toString())
+//                },
+//            value = searchQuery.value,
+//            onValueChange = {
+//                searchQuery .value = it
+//                onSearchQueryChanged(it)
+//            },
+//            singleLine = true,
+//            textStyle = TextStyle().copy(fontSize = 18.sp),
+//        )
+//
+//        IconButton(
+//            modifier = Modifier
+//                .padding(start = 10.dp)
+//                .size(38.dp)
+//                .align(Alignment.CenterVertically),
+//            onClick = {
+//                if (focus.value) focusManager.clearFocus() else focusRequester.requestFocus()
+//            }
+//        ) {
+//            Icon(
+//                Icons.Default.Search,
+//                contentDescription = "Search recipes button"
+//            )
+//        }
+//    }
+//}
+//
+//
+//@Composable
+//internal fun MainScreenFloatingButton(
+//    modifier: Modifier,
+//    screenUiState: RecipeScreenUiState,
+//    onClick: () -> Unit
+//){
+//
+//    val secondaryColor = MaterialTheme.colorScheme.secondary
+//    val onPrimaryColor = MaterialTheme.colorScheme.onPrimary
+//
+//    val gradientBrush = remember {
+//        Brush.linearGradient(
+//            0.0f to secondaryColor,
+//            1.0f to onPrimaryColor,
+//            start = Offset(182f, 182f),
+//            end = Offset(0f, 0f)
+//        )
+//    }
+//
+//    Button(
+//        modifier = modifier,
+//        shape = RoundedCornerShape(size = 22.dp),
+//        contentPadding = PaddingValues(0.dp),
+//        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+//        elevation = ButtonDefaults.buttonElevation(8.dp),
+//        onClick = onClick
+//    ){
+//        Box(
+//            modifier = Modifier
+//                .background(
+//                    gradientBrush,
+//                    RoundedCornerShape(22.dp)
+//                )
+//                .size(
+//                    width = 75.dp,
+//                    height = 75.dp
+//                )
+//        ) {
+//            when(screenUiState.content){
+//                RecipeFeedContent.InterestingRecipes, RecipeFeedContent.FoundRecipes -> {
+//                    Icon(
+//                        modifier = Modifier
+//                            .align(Alignment.Center)
+//                            .fillMaxSize(0.58f),
+//                        painter = painterResource(id = R.drawable.ic_bookmark),
+//                        tint = Color.White,
+//                        contentDescription = "Add new Recipe Button"
+//                    )
+//                }
+//                RecipeFeedContent.FavoriteRecipes -> {
+//                    Icon(
+//                        modifier = Modifier
+//                            .align(Alignment.Center)
+//                            .fillMaxSize(0.58f),
+//                        painter = painterResource(id = R.drawable.add_icon),
+//                        tint = Color.White,
+//                        contentDescription = "Add new Recipe Button"
+//                    )
+//                }
+//            }
+//
+//        }
+//    }
+//}
+//
+//
+//@Composable
+//internal fun MainContent(
+//    modifier: Modifier = Modifier,
+//    screenUiState: RecipeScreenUiState,
+//    contentUiState: RecipesFeedUiState,
+//    contentListState: LazyListState,
+//    deskFullScreen: () -> Boolean,
+//    onRetryButtonClicked: () -> Unit,
+//    onRecipeBookmarked: (Recipe, Boolean) -> Unit,
+//){
+//
+//    Log.d("myTag", "recompose")
+//
+//    val translationY = remember {
+//        Animatable(2400 + 150f)
+//    }
+//
+//    val isFullScreen by remember {
+//        derivedStateOf {
+//            deskFullScreen()
+//        }
+//    }
+//
+//    LaunchedEffect(key1 = screenUiState.content){
+//        translationY.animateTo(
+//            2400 + 150f,
+//            animationSpec = tween(
+//                200,
+//                easing = EaseInOutQuint
+//                )
+//        )
+//        if (contentListState.firstVisibleItemIndex != 0) {
+//            contentListState.scrollToItem(0)
+//        }
+//        translationY.animateTo(
+//            0f,
+//            animationSpec = tween(
+//                320,
+//                easing = EaseOutQuad
+//            )
+//        )
+//    }
+//
+//    val surfaceColor = MaterialTheme.colorScheme.surface
+//    val surfaceVariant = MaterialTheme.colorScheme.surfaceVariant
+//
+//    val gradientBrush = remember {
+//        Brush.linearGradient(
+//            0.0f to surfaceColor,
+//            1.0f to surfaceVariant,
+//        )
+//    }
+//
+//    val tittleVisibilityState = remember {
+//        derivedStateOf {
+//            if (contentListState.firstVisibleItemIndex == 0){
+//                contentListState.firstVisibleItemScrollOffset
+//            } else {
+//                100
+//            }
+//        }
+//    }
+//
+//    val fullScreenTranslation by animateFloatAsState(
+//        targetValue = if(isFullScreen) 1f else 0f, label = "deskFullScreen animation"
+//    )
+//
+//    Box(
+//        modifier = modifier
+//            .graphicsLayer {
+//                this.translationY = translationY.value + 150f - 150f * fullScreenTranslation
+//            }
+//            .drawWithContent {
+//                val corner = lerp(98.dp, 0.dp, fullScreenTranslation).value
+//                drawRoundRect(
+//                    gradientBrush,
+//                    cornerRadius = CornerRadius(
+//                        corner,
+//                        corner
+//                    )
+//                )
+//                drawContent()
+//            }
+//            .fillMaxSize(),
+//        contentAlignment = Alignment.TopCenter
+//    ) {
+//
+//        when(contentUiState){
+//            is RecipesFeedUiState.Loading -> CircularProgressIndicator(
+//                modifier = Modifier
+//                    .align(Alignment.Center)
+//            )
+//            is RecipesFeedUiState.Success -> {
+//                ContentTittle(
+//                    screenUiState,
+//                    scrollState = { tittleVisibilityState.value }
+//                )
+//                RecipesList(
+//                    content = contentUiState.data,
+//                    listState = contentListState,
+//                    onRecipeBookmarked = onRecipeBookmarked
+//                )
+//            }
+//            is RecipesFeedUiState.Error -> {
+//                ErrorMessage(
+//                    modifier = Modifier
+//                        .align(Alignment.Center),
+//                    message = contentUiState.message,
+//                    onRetryButtonClicked = onRetryButtonClicked
+//                )
+//            }
+//        }
+//    }
+//
+//}
+//
+//@Composable
+//internal fun ContentTittle(
+//    screenUiState: RecipeScreenUiState,
+//    scrollState: () -> Int
+//){
+//
+//    Text(
+//        modifier = Modifier
+//            .graphicsLayer {
+//                val interpolator = lerp(1.dp, 0.dp, scrollState() / 100f).value
+//                val scale = if (interpolator > 0.8f) interpolator else 0.8f
+//                this.scaleY = scale
+//                this.scaleX = scale
+//                this.alpha = interpolator
+//            }
+//            .padding(top = 38.dp),
+//        text = screenUiState.content.tittle,
+//        fontSize = 28.sp,
+//        color = Color.White,
+//    )
+//}
 
-    val contentListState = rememberLazyListState()
 
-    val deskFullScreen = remember {
-        derivedStateOf {
-            if (contentListState.firstVisibleItemIndex == 0){
-                contentListState.firstVisibleItemScrollOffset > 200f
-            } else {
-                true
-            }
-        }
-    }
-
-    Box(
-        modifier = Modifier
-            .background(Color.White)
-            .fillMaxSize(),
-    ){
-
-        MainScreenBackgroundImage(
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Column {
-            TopBar(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                isVisible = { deskFullScreen.value },
-                onSearchQueryChanged = {query -> viewModel.searchRecipes(query) },
-            )
-
-            MainContent(
-                modifier = Modifier,
-                screenUiState = screenUiState.value,
-                contentUiState = contentUiState.value,
-                contentListState = contentListState,
-                deskFullScreen = { deskFullScreen.value },
-                onRetryButtonClicked = { viewModel.loadRandomRecipes() },
-                onRecipeBookmarked = {id, isBookMarked ->
-                    if (isBookMarked) {
-                        viewModel.bookmarkRecipe(id)
-                    } else {
-                        viewModel.unbookmarkRecipe(id)
-                    }
-                },
-                navigateToBookmarks = { viewModel.loadBookmarks() }
-            )
-        }
-
-        MainScreenFloatingButton(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(
-                    end = 16.dp,
-                    bottom = 26.dp
-                )
-        )
-    }
-}
-
-@Composable
-internal fun MainScreenBackgroundImage(
-    modifier: Modifier = Modifier
-){
-    Image(
-        modifier = modifier,
-        painter = painterResource(id = if (isSystemInDarkTheme()) {
-            R.drawable.recipe_background_dark
-        } else {
-            R.drawable.recipe_background
-        }
-        ),
-        contentDescription = "",
-        contentScale = ContentScale.FillWidth
-    )
-}
-
-
-
-@Composable
-internal fun TopBar(
-    modifier: Modifier = Modifier,
-    isVisible: () -> Boolean,
-    onSearchQueryChanged: (String) -> Unit,
-){
-    val focused = remember {
-        mutableStateOf(false)
-    }
-
-    val background by animateColorAsState(
-        targetValue = if (!(isVisible() || focused.value)){
-            Color.Transparent
-        } else {
-            MaterialTheme.colorScheme.surface
-        },
-        label = "SearchView background"
-    )
-
-
-    Box(
-        modifier = modifier
-            .drawWithContent {
-                drawRect(background)
-                drawContent()
-            }
-    ){
-        SearchBar(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp),
-            isVisible = isVisible,
-            onSearchQueryChanged = onSearchQueryChanged,
-            focus = focused,
-        )
-    }
-}
-
-@Composable
-internal fun SearchBar(
-    modifier: Modifier = Modifier,
-    isVisible: () -> Boolean = { true },
-    onSearchQueryChanged: (String) -> Unit,
-    focus: MutableState<Boolean>,
-){
-    val focusRequester = remember {
-        FocusRequester()
-    }
-
-    val focusManager = LocalFocusManager.current
-
-    val textFieldIsVisible = remember {
-        derivedStateOf {
-            isVisible() || focus.value
-        }
-    }
-
-    val visibilityState by animateFloatAsState(
-        targetValue = if (textFieldIsVisible.value){
-            1f
-        }else {
-            0f
-        },
-        label = "searchBarVisibility animation"
-    )
-
-    val searchQuery = rememberSaveable {
-        mutableStateOf("")
-    }
-
-    Row(
-        modifier = modifier
-    ) {
-        BasicTextField(
-            modifier = Modifier
-                .graphicsLayer {
-                    this.alpha = visibilityState
-                }
-                .padding(start = 10.dp)
-                .background(Color.White, RoundedCornerShape(18.dp))
-                .padding(8.dp)
-                .fillMaxWidth(0.84f)
-                .focusable()
-                .focusRequester(focusRequester)
-                .onFocusChanged { focusState ->
-                    focus.value = focusState.isFocused
-                    Log.d("myTag", focusState.isFocused.toString())
-                },
-            value = searchQuery.value,
-            onValueChange = {
-                searchQuery .value = it
-                onSearchQueryChanged(it)
-            },
-            singleLine = true,
-            textStyle = TextStyle().copy(fontSize = 18.sp),
-        )
-
-        IconButton(
-            modifier = Modifier
-                .padding(start = 10.dp)
-                .size(38.dp)
-                .align(Alignment.CenterVertically),
-            onClick = {
-                if (focus.value) focusManager.clearFocus() else focusRequester.requestFocus()
-            }
-        ) {
-            Icon(
-                Icons.Default.Search,
-                contentDescription = "Search recipes button"
-            )
-        }
-    }
-}
-
-
-@Composable
-internal fun MainScreenFloatingButton(
-    modifier: Modifier,
-){
-
-    val surfaceColor = MaterialTheme.colorScheme.surface
-    val onPrimaryColor = MaterialTheme.colorScheme.onPrimary
-
-    val gradientBrush = remember {
-        Brush.linearGradient(
-            0.0f to surfaceColor,
-            1.0f to onPrimaryColor,
-            start = Offset(182f, 182f),
-            end = Offset(0f, 0f)
-        )
-    }
-
-    Button(
-        modifier = modifier,
-        shape = RoundedCornerShape(size = 22.dp),
-        contentPadding = PaddingValues(0.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-        elevation = ButtonDefaults.buttonElevation(8.dp),
-        onClick = { Log.d("myTag", "click") }
-    ){
-        Box(
-            modifier = Modifier
-                .background(
-                    gradientBrush,
-                    RoundedCornerShape(22.dp)
-                )
-                .size(
-                    width = 75.dp,
-                    height = 75.dp
-                )
-        ) {
-            Image(
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .fillMaxSize(0.58f),
-                painter = painterResource(id = R.drawable.add_icon),
-                contentDescription = "Add new Recipe Button"
-            )
-        }
-    }
-}
-
-
-@Composable
-internal fun MainContent(
-    modifier: Modifier,
-    screenUiState: RecipeScreenUiState,
-    contentUiState: RecipesFeedContentUiState,
-    contentListState: LazyListState,
-    deskFullScreen: () -> Boolean,
-    onRetryButtonClicked: () -> Unit,
-    onRecipeBookmarked: (Long, Boolean) -> Unit,
-    navigateToBookmarks: () -> Unit
-){
-
-
-    val windowHeight = LocalContext.current.resources.displayMetrics.heightPixels
-
-    val translationY = remember {
-        Animatable(windowHeight + 150f)
-    }
-
-    LaunchedEffect(key1 = screenUiState.content){
-        translationY.animateTo(windowHeight + 150f)
-        translationY.animateTo(0f)
-    }
-
-    val surfaceColor = MaterialTheme.colorScheme.surface
-    val surfaceVariant = MaterialTheme.colorScheme.surfaceVariant
-
-    val gradientBrush = remember {
-        Brush.linearGradient(
-            0.0f to surfaceColor,
-            1.0f to surfaceVariant,
-        )
-    }
-
-    val tittleVisibilityState = remember {
-        derivedStateOf {
-            if (contentListState.firstVisibleItemIndex == 0){
-                contentListState.firstVisibleItemScrollOffset
-            } else {
-                100
-            }
-        }
-    }
-
-    val deskFullScreenState by animateFloatAsState(
-        targetValue = if (deskFullScreen()) 1f else 0f,
-        label = ""
-    )
-
-
-    Box(
-        modifier = modifier
-            .graphicsLayer {
-                this.translationY = translationY.value + 150f - 150f * deskFullScreenState
-            }
-            .background(
-                gradientBrush,
-                RoundedCornerShape(
-                    topStart = lerp(26.dp, 0.dp, deskFullScreenState),
-                    topEnd = lerp(26.dp, 0.dp, deskFullScreenState)
-                )
-            )
-            .fillMaxSize(),
-        contentAlignment = Alignment.TopCenter
-    ) {
-
-        NavigationButton(
-            modifier = Modifier
-                .graphicsLayer {
-                    this.alpha = 1 - deskFullScreenState
-                }
-                .padding(10.dp)
-                .align(Alignment.TopEnd)
-                .size(36.dp),
-            deskFullScreen = deskFullScreen,
-            navigateToBookmarks = navigateToBookmarks
-        )
-
-        when(contentUiState){
-            is RecipesFeedContentUiState.Loading -> CircularProgressIndicator(
-                modifier = Modifier
-                    .align(Alignment.Center)
-            )
-            is RecipesFeedContentUiState.Success -> {
-                ContentTittle(
-                    screenUiState,
-                    scrollState = { tittleVisibilityState.value }
-                )
-                RecipesList(
-                    content = contentUiState.data,
-                    modifier = Modifier,
-                    listState = contentListState,
-                    onRecipeBookmarked = onRecipeBookmarked
-                )
-            }
-            is RecipesFeedContentUiState.Error -> {
-                ErrorMessage(
-                    modifier = Modifier
-                        .align(Alignment.Center),
-                    message = contentUiState.message,
-                    onRetryButtonClicked = onRetryButtonClicked
-                )
-            }
-        }
-
-    }
-
-}
-
-@Composable
-fun NavigationButton(
-    modifier: Modifier,
-    deskFullScreen: () -> Boolean,
-    navigateToBookmarks: () -> Unit
-) {
-
-    IconButton(
-        modifier = modifier,
-        enabled = !deskFullScreen(),
-        onClick = navigateToBookmarks
-    ) {
-        Icon(painter = painterResource(
-            id = R.drawable.ic_bookmark
-        ), contentDescription = "navigate to bookmarks"
-        )
-    }
-}
-
-@Composable
-internal fun ContentTittle(
-    screenUiState: RecipeScreenUiState,
-    scrollState: () -> Int
-){
-
-    Text(
-        modifier = Modifier
-            .graphicsLayer {
-                val interpolator = lerp(1.dp, 0.dp, scrollState() / 100f).value
-                val scale = if (interpolator > 0.8f) interpolator else 0.8f
-                this.scaleY = scale
-                this.scaleX = scale
-                this.alpha = interpolator
-            }
-            .padding(top = 46.dp),
-        text = screenUiState.content.tittle,
-        fontSize = 28.sp,
-        color = Color.White,
-    )
-}
-
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 internal fun RecipesList(
     content: List<Recipe>,
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
     listState: LazyListState,
-    onRecipeBookmarked: (Long, Boolean) -> Unit
+    onRecipeBookmarked: (Recipe, Boolean) -> Unit
 ){
     LazyColumn(
         modifier = modifier,
-        contentPadding = PaddingValues(vertical = 68.dp),
+        contentPadding = PaddingValues(vertical = 58.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         state = listState
     ){
@@ -503,7 +528,7 @@ internal fun RecipesList(
 internal fun RecipeItem(
     recipe: Recipe,
     modifier: Modifier,
-    onRecipeBookmarked: (Long, Boolean) -> Unit
+    onRecipeBookmarked: (Recipe, Boolean) -> Unit
 ){
 
     Card(
@@ -533,7 +558,7 @@ internal fun RecipeItem(
             )
             BookMark(
                 isBookmarked = recipe.isBookmarked,
-                recipeId = recipe.id,
+                recipe = recipe,
                 modifier = Modifier
                     .padding(7.dp)
                     .align(Alignment.TopEnd),
@@ -546,29 +571,29 @@ internal fun RecipeItem(
 @Composable
 fun BookMark(
     isBookmarked: Boolean,
-    recipeId: Long,
+    recipe: Recipe,
     modifier: Modifier,
-    onRecipeBookmarked: (Long, Boolean) -> Unit
+    onRecipeBookmarked: (Recipe, Boolean) -> Unit
 ) {
-    val isBookmarked = remember {
+    val bookmark = remember {
         mutableStateOf(isBookmarked)
     }
 
     IconButton(
         modifier = modifier,
         onClick = {
-            isBookmarked.value = !isBookmarked.value
-            onRecipeBookmarked(recipeId, isBookmarked.value)
+            bookmark.value = !bookmark.value
+            onRecipeBookmarked(recipe, bookmark.value)
         },
     ) {
         Icon(
-            modifier = Modifier.size(32.dp),
-            imageVector = if (isBookmarked.value) {
+            modifier = Modifier.size(28.dp),
+            imageVector = if (bookmark.value) {
                 Icons.Default.Favorite
             }else {
                 Icons.Default.FavoriteBorder
             },
-            tint = if (isBookmarked.value) Color.Red else Color.White,
+            tint = if (bookmark.value) Color.Red else MaterialTheme.colorScheme.onSurface,
             contentDescription = "bookmark"
         )
     }
@@ -584,7 +609,7 @@ internal fun RecipeCardBackground(
     val whiteGradient = remember {
         Brush.verticalGradient(
             0.0f to Color(0,0,0,20),
-            0.84f to backgroundColor
+            0.92f to backgroundColor
         )
     }
 
@@ -613,7 +638,6 @@ internal fun RecipeTittle(
         text = tittle,
         fontSize = 22.sp,
         fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.onBackground
     )
 }
 
@@ -627,7 +651,7 @@ internal fun RecipeInfo(
             tittle = recipe.tittle ?: "No title to this recipe",
             modifier = Modifier
                 .align(Alignment.TopStart)
-                .padding(bottom = 3.dp)
+                .padding(bottom = 6.dp)
         )
         RecipeAdditionalInfo(
             modifier = Modifier

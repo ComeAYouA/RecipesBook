@@ -21,17 +21,19 @@ internal class RecipesRepositoryImpl @Inject constructor(
             .map(NetworkRecipeResource::asExternalModel)
 
     override suspend fun getBookmarkedRecipes(): List<Recipe> {
-        val userData = recipesDao.getBookmarkedRecipes().map { it.id.toString() }
+        val userData = recipesDao.getBookmarkedRecipes().map { it.id }.joinToString(separator = ",")
+
 
         return network.getRecipesByIds(userData).map(NetworkRecipeResource::asBookmarkedRecipeModel)
     }
 
-    override suspend fun deleteBookmarkedRecipe(recipeId: Long) = recipesDao.deleteBookmarkedRecipe(recipeId)
-    override suspend fun addBookmarkedRecipe(recipesId: Long)
+    override suspend fun deleteBookmarkedRecipe(recipe: Recipe) = recipesDao.deleteBookmarkedRecipe(recipe.id)
+    override suspend fun addBookmarkedRecipe(recipe: Recipe)
         = recipesDao.addBookmarkedRecipe(
             RecipeEntity(
-                id = recipesId,
-                isBookMarked = true
+                id = recipe.id,
+                isBookMarked = true,
+                tittle = recipe.tittle ?: ""
             )
         )
 }

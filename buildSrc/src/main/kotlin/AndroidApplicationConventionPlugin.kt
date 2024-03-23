@@ -11,16 +11,16 @@ class AndroidApplicationConventionPlugin: Plugin<Project> {
             }
 
             androidApp().apply {
-                compileSdk = 34
+                compileSdk = Versions.compileSdk
 
                 defaultConfig {
-                    minSdk = 24
-                    lint.targetSdk = 34
+                    minSdk = Versions.minSdk
+                    lint.targetSdk = Versions.targetSdk
                 }
 
                 compileOptions {
-                    sourceCompatibility = JavaVersion.VERSION_17
-                    targetCompatibility = JavaVersion.VERSION_17
+                    sourceCompatibility = Versions.javaVersion
+                    targetCompatibility = Versions.javaVersion
                 }
             }
         }

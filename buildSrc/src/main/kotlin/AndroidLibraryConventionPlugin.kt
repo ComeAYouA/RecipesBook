@@ -12,10 +12,10 @@ class AndroidLibraryConventionPlugin: Plugin<Project> {
             }
 
             androidLib().apply {
-                compileSdk = 34
+                compileSdk = Versions.compileSdk
 
                 defaultConfig {
-                    minSdk = 24
+                    minSdk = Versions.minSdk
 
                     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
                     consumerProguardFiles("consumer-rules.pro")
@@ -32,8 +32,8 @@ class AndroidLibraryConventionPlugin: Plugin<Project> {
                 }
 
                 compileOptions {
-                    sourceCompatibility = JavaVersion.VERSION_17
-                    targetCompatibility = JavaVersion.VERSION_17
+                    sourceCompatibility = Versions.javaVersion
+                    targetCompatibility = Versions.javaVersion
                 }
             }
 

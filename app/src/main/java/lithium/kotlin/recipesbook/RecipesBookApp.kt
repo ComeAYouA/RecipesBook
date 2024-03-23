@@ -3,8 +3,5 @@ package lithium.kotlin.recipesbook
 import android.app.Application
 import dagger.hilt.android.HiltAndroidApp
 
-
 @HiltAndroidApp
-class RecipesBookApp: Application() {
-
-}
+class RecipesBookApp: Application()

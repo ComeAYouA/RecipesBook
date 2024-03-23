@@ -10,14 +10,23 @@ val Purple40 = Color(0xFF6650a4)
 val PurpleGrey40 = Color(0xFF625b71)
 val Pink40 = Color(0xFF7D5260)
 
-val Green80 = Color(84, 168, 148)
-val LightGreen100 = Color(108, 153, 35)
-val LightGreenColor =  Color(149, 219, 0)
-val LightYellow200 = Color(195, 197, 82)
-val Pink300 = Color(255, 210, 251)
 
-val Gray200 = Color(64, 69, 65)
-val Gray100 = Color(76, 76, 76)
-val LightGreen40 = Color(144, 206, 123)
+val LightGreen60 = Color(191, 237, 163)
+val LightGreen80 = Color(211, 246, 221)
+val LightGreen100 = Color(153, 193, 128)
+val LightGreen200 = Color(202, 255, 169)
+
+val LightOrange = Color(165, 255, 190)
+
+val Green100 = Color(57, 112, 72)
+val Green200 = Color(63, 98, 47)
+val Green300 = Color(68, 97, 80)
+val Green400 = Color(0, 56, 29)
+
+
+val Aquamarine = Color(3, 53, 50)
+
+val Gray100 = Color(69, 69, 69)
+
 
 

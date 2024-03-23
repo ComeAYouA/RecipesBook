@@ -7,5 +7,6 @@ import androidx.room.PrimaryKey
 data class RecipeEntity(
     @PrimaryKey
     val id: Long,
-    val isBookMarked: Boolean
+    val isBookMarked: Boolean,
+    val tittle: String
 )
