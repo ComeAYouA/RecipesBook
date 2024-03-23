@@ -1,16 +1,9 @@
 package lithium.kotlin.recipesbook.feature.feed
 
-import android.util.Log
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.EaseInOutQuint
-import androidx.compose.animation.core.EaseOutQuad
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.focusable
-import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -21,9 +14,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
@@ -40,34 +33,23 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.unit.sp
 import com.bumptech.glide.integration.compose.CrossFade
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
@@ -78,495 +60,341 @@ import lithium.kotlin.recipesbook.core.model.description
 import lithium.kotlin.recipesbook.core.ui.R
 import lithium.kotlin.recipesbook.core.ui.extension.convertToResource
 
-//@Composable
-//fun RecipeScreen(
-//    viewModel: RecipesFeedViewModel
-//){
-//    val screenUiState = viewModel.screenUiState.collectAsState()
-//
-//    val contentListState = rememberLazyListState()
-//
-//    val deskFullScreen = remember {
-//        derivedStateOf {
-//            if (contentListState.firstVisibleItemIndex == 0){
-//                contentListState.firstVisibleItemScrollOffset > 200f
-//            } else {
-//                true
-//            }
-//        }
-//    }
-//
-//    Box(
-//        modifier = Modifier
-//            .background(Color.White)
-//            .fillMaxSize(),
-//    ){
-//
-//        MainScreenBackgroundImage(
-//            modifier = Modifier.fillMaxWidth()
-//        )
-//
-//        Column {
-//            TopBar(
-//                modifier = Modifier
-//                    .fillMaxWidth(),
-//                isVisible = deskFullScreen,
-//                onSearchQueryChanged = {query ->
-//                    when(screenUiState.value.content){
-//                        RecipeFeedContent.InterestingRecipes, RecipeFeedContent.FoundRecipes -> {
-//                            viewModel.searchRandomRecipes(query)
-//                        }
-//                        RecipeFeedContent.FavoriteRecipes -> {
-//                            viewModel.searchBookmarkedRecipes(query)
-//                        }
-//                    }
-//                },
-//            )
-//
-//            MainContent(
-//                screenUiState = screenUiState.value,
-//                contentUiState = screenUiState.value.contentState,
-//                contentListState = contentListState,
-//                deskFullScreen = { deskFullScreen.value },
-//                onRetryButtonClicked = { viewModel.loadRandomRecipes() },
-//                onRecipeBookmarked = {recipe, isBookMarked ->
-//                    if (isBookMarked) {
-//                        viewModel.bookmarkRecipe(recipe)
-//                    } else {
-//                        viewModel.unbookmarkRecipe(recipe)
-//                    }
-//                },
-//            )
-//        }
-//
-//        MainScreenFloatingButton(
-//            modifier = Modifier
-//                .align(Alignment.BottomEnd)
-//                .padding(
-//                    end = 16.dp,
-//                    bottom = 26.dp
-//                ),
-//            screenUiState = screenUiState.value,
-//            onClick = {
-//                when(screenUiState.value.content){
-//                    RecipeFeedContent.InterestingRecipes, RecipeFeedContent.FoundRecipes -> {
-//                        viewModel.loadBookmarks()
-//                    }
-//                    RecipeFeedContent.FavoriteRecipes -> {
-//                        viewModel.loadRandomRecipes()
-//                    }
-//                }
-//            }
-//        )
-//    }
-//}
-//
-//@Composable
-//internal fun MainScreenBackgroundImage(
-//    modifier: Modifier = Modifier
-//){
-//    Image(
-//        modifier = modifier,
-//        painter = painterResource(id = if (isSystemInDarkTheme()) {
-//            R.drawable.recipe_background_dark
-//        } else {
-//            R.drawable.recipe_background
-//        }
-//        ),
-//        contentDescription = "",
-//        contentScale = ContentScale.FillBounds
-//    )
-//}
-//
-//
-//
-//@Composable
-//internal fun TopBar(
-//    modifier: Modifier = Modifier,
-//    isVisible: State<Boolean>,
-//    onSearchQueryChanged: (String) -> Unit,
-//){
-//    val focused = remember {
-//        mutableStateOf(false)
-//    }
-//
-//    val background by animateColorAsState(
-//        targetValue = if (!(isVisible.value|| focused.value)){
-//            Color.Transparent
-//        } else {
-//            MaterialTheme.colorScheme.surface
-//        },
-//        label = "SearchView background"
-//    )
-//
-//
-//    Box(
-//        modifier = modifier
-//            .drawWithContent {
-//                drawRect(background)
-//                drawContent()
-//            }
-//    ){
-//        SearchBar(
-//            modifier = Modifier
-//                .fillMaxWidth()
-//                .padding(8.dp),
-//            isVisible = isVisible,
-//            onSearchQueryChanged = onSearchQueryChanged,
-//            focus = focused,
-//        )
-//    }
-//}
-//
-//@Composable
-//internal fun SearchBar(
-//    modifier: Modifier = Modifier,
-//    isVisible: State<Boolean>,
-//    onSearchQueryChanged: (String) -> Unit,
-//    focus: MutableState<Boolean>,
-//){
-//    val focusRequester = remember {
-//        FocusRequester()
-//    }
-//
-//    val focusManager = LocalFocusManager.current
-//
-//    val textFieldIsVisible = remember {
-//        derivedStateOf {
-//            isVisible.value || focus.value
-//        }
-//    }
-//
-//    val visibilityState by animateFloatAsState(
-//        targetValue = if (textFieldIsVisible.value){
-//            1f
-//        }else {
-//            0f
-//        },
-//        label = "searchBarVisibility animation"
-//    )
-//
-//    val searchQuery = rememberSaveable {
-//        mutableStateOf("")
-//    }
-//
-//    Row(
-//        modifier = modifier
-//    ) {
-//        BasicTextField(
-//            modifier = Modifier
-//                .graphicsLayer {
-//                    this.alpha = visibilityState
-//                }
-//                .padding(start = 10.dp)
-//                .background(Color.White, RoundedCornerShape(18.dp))
-//                .padding(8.dp)
-//                .fillMaxWidth(0.84f)
-//                .focusable()
-//                .focusRequester(focusRequester)
-//                .onFocusChanged { focusState ->
-//                    focus.value = focusState.isFocused
-//                    Log.d("myTag", focusState.isFocused.toString())
-//                },
-//            value = searchQuery.value,
-//            onValueChange = {
-//                searchQuery .value = it
-//                onSearchQueryChanged(it)
-//            },
-//            singleLine = true,
-//            textStyle = TextStyle().copy(fontSize = 18.sp),
-//        )
-//
-//        IconButton(
-//            modifier = Modifier
-//                .padding(start = 10.dp)
-//                .size(38.dp)
-//                .align(Alignment.CenterVertically),
-//            onClick = {
-//                if (focus.value) focusManager.clearFocus() else focusRequester.requestFocus()
-//            }
-//        ) {
-//            Icon(
-//                Icons.Default.Search,
-//                contentDescription = "Search recipes button"
-//            )
-//        }
-//    }
-//}
-//
-//
-//@Composable
-//internal fun MainScreenFloatingButton(
-//    modifier: Modifier,
-//    screenUiState: RecipeScreenUiState,
-//    onClick: () -> Unit
-//){
-//
-//    val secondaryColor = MaterialTheme.colorScheme.secondary
-//    val onPrimaryColor = MaterialTheme.colorScheme.onPrimary
-//
-//    val gradientBrush = remember {
-//        Brush.linearGradient(
-//            0.0f to secondaryColor,
-//            1.0f to onPrimaryColor,
-//            start = Offset(182f, 182f),
-//            end = Offset(0f, 0f)
-//        )
-//    }
-//
-//    Button(
-//        modifier = modifier,
-//        shape = RoundedCornerShape(size = 22.dp),
-//        contentPadding = PaddingValues(0.dp),
-//        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-//        elevation = ButtonDefaults.buttonElevation(8.dp),
-//        onClick = onClick
-//    ){
-//        Box(
-//            modifier = Modifier
-//                .background(
-//                    gradientBrush,
-//                    RoundedCornerShape(22.dp)
-//                )
-//                .size(
-//                    width = 75.dp,
-//                    height = 75.dp
-//                )
-//        ) {
-//            when(screenUiState.content){
-//                RecipeFeedContent.InterestingRecipes, RecipeFeedContent.FoundRecipes -> {
-//                    Icon(
-//                        modifier = Modifier
-//                            .align(Alignment.Center)
-//                            .fillMaxSize(0.58f),
-//                        painter = painterResource(id = R.drawable.ic_bookmark),
-//                        tint = Color.White,
-//                        contentDescription = "Add new Recipe Button"
-//                    )
-//                }
-//                RecipeFeedContent.FavoriteRecipes -> {
-//                    Icon(
-//                        modifier = Modifier
-//                            .align(Alignment.Center)
-//                            .fillMaxSize(0.58f),
-//                        painter = painterResource(id = R.drawable.add_icon),
-//                        tint = Color.White,
-//                        contentDescription = "Add new Recipe Button"
-//                    )
-//                }
-//            }
-//
-//        }
-//    }
-//}
-//
-//
-//@Composable
-//internal fun MainContent(
-//    modifier: Modifier = Modifier,
-//    screenUiState: RecipeScreenUiState,
-//    contentUiState: RecipesFeedUiState,
-//    contentListState: LazyListState,
-//    deskFullScreen: () -> Boolean,
-//    onRetryButtonClicked: () -> Unit,
-//    onRecipeBookmarked: (Recipe, Boolean) -> Unit,
-//){
-//
-//    Log.d("myTag", "recompose")
-//
-//    val translationY = remember {
-//        Animatable(2400 + 150f)
-//    }
-//
-//    val isFullScreen by remember {
-//        derivedStateOf {
-//            deskFullScreen()
-//        }
-//    }
-//
-//    LaunchedEffect(key1 = screenUiState.content){
-//        translationY.animateTo(
-//            2400 + 150f,
-//            animationSpec = tween(
-//                200,
-//                easing = EaseInOutQuint
-//                )
-//        )
-//        if (contentListState.firstVisibleItemIndex != 0) {
-//            contentListState.scrollToItem(0)
-//        }
-//        translationY.animateTo(
-//            0f,
-//            animationSpec = tween(
-//                320,
-//                easing = EaseOutQuad
-//            )
-//        )
-//    }
-//
-//    val surfaceColor = MaterialTheme.colorScheme.surface
-//    val surfaceVariant = MaterialTheme.colorScheme.surfaceVariant
-//
-//    val gradientBrush = remember {
-//        Brush.linearGradient(
-//            0.0f to surfaceColor,
-//            1.0f to surfaceVariant,
-//        )
-//    }
-//
-//    val tittleVisibilityState = remember {
-//        derivedStateOf {
-//            if (contentListState.firstVisibleItemIndex == 0){
-//                contentListState.firstVisibleItemScrollOffset
-//            } else {
-//                100
-//            }
-//        }
-//    }
-//
-//    val fullScreenTranslation by animateFloatAsState(
-//        targetValue = if(isFullScreen) 1f else 0f, label = "deskFullScreen animation"
-//    )
-//
-//    Box(
-//        modifier = modifier
-//            .graphicsLayer {
-//                this.translationY = translationY.value + 150f - 150f * fullScreenTranslation
-//            }
-//            .drawWithContent {
-//                val corner = lerp(98.dp, 0.dp, fullScreenTranslation).value
-//                drawRoundRect(
-//                    gradientBrush,
-//                    cornerRadius = CornerRadius(
-//                        corner,
-//                        corner
-//                    )
-//                )
-//                drawContent()
-//            }
-//            .fillMaxSize(),
-//        contentAlignment = Alignment.TopCenter
-//    ) {
-//
-//        when(contentUiState){
-//            is RecipesFeedUiState.Loading -> CircularProgressIndicator(
-//                modifier = Modifier
-//                    .align(Alignment.Center)
-//            )
-//            is RecipesFeedUiState.Success -> {
-//                ContentTittle(
-//                    screenUiState,
-//                    scrollState = { tittleVisibilityState.value }
-//                )
-//                RecipesList(
-//                    content = contentUiState.data,
-//                    listState = contentListState,
-//                    onRecipeBookmarked = onRecipeBookmarked
-//                )
-//            }
-//            is RecipesFeedUiState.Error -> {
-//                ErrorMessage(
-//                    modifier = Modifier
-//                        .align(Alignment.Center),
-//                    message = contentUiState.message,
-//                    onRetryButtonClicked = onRetryButtonClicked
-//                )
-//            }
-//        }
-//    }
-//
-//}
-//
-//@Composable
-//internal fun ContentTittle(
-//    screenUiState: RecipeScreenUiState,
-//    scrollState: () -> Int
-//){
-//
-//    Text(
-//        modifier = Modifier
-//            .graphicsLayer {
-//                val interpolator = lerp(1.dp, 0.dp, scrollState() / 100f).value
-//                val scale = if (interpolator > 0.8f) interpolator else 0.8f
-//                this.scaleY = scale
-//                this.scaleX = scale
-//                this.alpha = interpolator
-//            }
-//            .padding(top = 38.dp),
-//        text = screenUiState.content.tittle,
-//        fontSize = 28.sp,
-//        color = Color.White,
-//    )
-//}
+@Composable
+fun Preview(
+    viewModel: RecipesFeedViewModel
+){
+
+    val backgroundColor = MaterialTheme.colorScheme.surface
+    val onBackgroundColor = MaterialTheme.colorScheme.surfaceVariant
+
+    val backgroundGradient = remember {
+        Brush.linearGradient(
+            0.3f to backgroundColor,
+            1.0f to onBackgroundColor,
+        )
+    }
+
+    val settingsExpanded = remember {
+        mutableStateOf(false)
+    }
+
+    Column(
+        modifier = Modifier
+            .background(backgroundGradient)
+            .fillMaxSize()
+    ){
+        SearchBar(
+            modifier = Modifier
+                .padding(
+                    start = 16.dp,
+                    end = 16.dp,
+                    top = 47.dp,
+                    bottom = 16.dp
+                )
+                .fillMaxWidth(),
+            onSearchQueryChanged = { query -> viewModel.searchRandomRecipes(query)},
+            onSettingsButtonClicked = {settingsExpanded.value = !settingsExpanded.value}
+        )
+
+        FiltersList(
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .padding(bottom = 12.dp),
+            filters = listOf(
+                RecipesFeedFilter("Diet", listOf("Gluten Free", "Vegeterian", "Paleon", "Pescetarian")),
+                RecipesFeedFilter("Cousine", listOf("Asian", "African", "American", "Chinese"))
+            ),
+            isVisible = { settingsExpanded.value }
+        )
+
+
+        Feed(
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally),
+            viewModel = viewModel
+        )
+
+    }
+}
+
+
+@Preview
+@Composable
+fun SearchBar(
+    modifier: Modifier = Modifier,
+    onSearchQueryChanged: (String) -> Unit = {},
+    onSettingsButtonClicked: () -> Unit = {}
+){
+    val searchQuery = rememberSaveable {
+        mutableStateOf("")
+    }
+
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.Absolute.SpaceAround
+    ){
+        BasicTextField(
+            modifier = Modifier
+                .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(18.dp))
+                .height(40.dp)
+                .padding(8.dp)
+                .fillMaxWidth(0.8f),
+            value = searchQuery.value,
+            onValueChange = {
+                searchQuery.value = it
+                onSearchQueryChanged(it)
+            },
+            singleLine = true,
+            textStyle = TextStyle().copy(
+                color = MaterialTheme.colorScheme.onBackground,
+                fontSize = 18.sp
+            ),
+            cursorBrush = Brush.linearGradient(
+                0.0f to MaterialTheme.colorScheme.onBackground,
+                1.0f to MaterialTheme.colorScheme.onBackground
+            ),
+            decorationBox = { innerTextField ->
+                Row{
+                    Icon(
+                        modifier = Modifier
+                            .padding(end = 8.dp),
+                        imageVector = Icons.Default.Search,
+                        contentDescription = ""
+                    )
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.CenterVertically)
+                    ){
+                        innerTextField()
+                    }
+                }
+            }
+        )
+
+        FilterButton(
+            modifier = Modifier
+                .background(MaterialTheme.colorScheme.primary, CircleShape)
+                .size(40.dp)
+                .align(Alignment.CenterVertically),
+            onClick = onSettingsButtonClicked
+        )
+
+    }
+
+}
+
 
 
 @Composable
-internal fun RecipesList(
-    content: List<Recipe>,
+fun FilterButton(
     modifier: Modifier = Modifier,
-    listState: LazyListState,
-    onRecipeBookmarked: (Recipe, Boolean) -> Unit
+    onClick: () -> Unit
 ){
-    LazyColumn(
+    IconButton(
         modifier = modifier,
-        contentPadding = PaddingValues(vertical = 58.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        state = listState
-    ){
-        items(content){ recipe ->
-            RecipeItem(
-                recipe = recipe,
-                modifier = Modifier
-                    .padding(top = 36.dp),
-                onRecipeBookmarked = onRecipeBookmarked
+        onClick = onClick
+    ) {
+        Icon(
+            modifier = Modifier
+                .size(18.dp),
+            painter = painterResource(id = R.drawable.ic_settings),
+            contentDescription = "settings"
+        )
+    }
+
+}
+
+
+@Composable
+fun FiltersList(
+    modifier: Modifier = Modifier,
+    filters: List<RecipesFeedFilter>,
+    isVisible: () -> Boolean
+){
+
+    val launchAnimationProgression = animateFloatAsState(
+        targetValue = if (isVisible()) 1f else 0f, label = "filterList animation"
+    )
+
+    Column(
+        modifier = modifier
+            .layout { measurable, constraints ->
+
+                val placeable = measurable.measure(constraints)
+
+                layout(height = (placeable.height * launchAnimationProgression.value).toInt(), width = placeable.width){
+                    placeable.place(0,0)
+                }
+            }
+            .graphicsLayer {
+                this.alpha = launchAnimationProgression.value
+            }
+    ) {
+        filters.forEach{
+            FilterItem(
+                modifier = Modifier.padding(bottom = 6.dp),
+                filter = it
             )
         }
     }
 }
 
 @Composable
-internal fun RecipeItem(
-    recipe: Recipe,
-    modifier: Modifier,
-    onRecipeBookmarked: (Recipe, Boolean) -> Unit
+fun FilterItem(
+    modifier: Modifier = Modifier,
+    filter: RecipesFeedFilter
 ){
 
+    Column(modifier = modifier) {
+        Text(
+            modifier = Modifier.padding(bottom = 6.dp, start = 14.dp),
+            text = filter.name,
+            fontSize = 18.sp,
+        )
+
+        LazyRow(
+            contentPadding = PaddingValues(horizontal = 12.dp)
+        ){
+            items(filter.properties){ property ->
+                FilterProperty(
+                    modifier = Modifier.padding(end = 6.dp),
+                    propertyName = property
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun FilterProperty(
+    modifier: Modifier = Modifier,
+    propertyName: String
+){
+    val isSelected = remember {
+        mutableStateOf(false)
+    }
+
+    Button(
+        modifier = modifier
+            .background(Color.Transparent),
+        colors = ButtonDefaults.buttonColors(if (!isSelected.value) MaterialTheme.colorScheme.primary else Color(97, 193, 125)),
+        onClick = { isSelected.value = !isSelected.value }
+    ) {
+        Text(
+            modifier = Modifier,
+            text = propertyName
+        )
+    }
+
+}
+
+
+
+
+@Composable
+internal fun Feed(
+    modifier: Modifier = Modifier,
+    viewModel: RecipesFeedViewModel
+){
+
+    val contentUiState = viewModel.screenUiState.collectAsState()
+
+    contentUiState.value.let { state ->
+        when(state){
+            is RecipesFeedUiState.Loading -> CircularProgressIndicator(
+                modifier = modifier
+            )
+            is RecipesFeedUiState.Success -> {
+                LazyColumn(
+                    modifier = modifier,
+                    contentPadding = PaddingValues(vertical = 18.dp)
+                ){
+                    items(state.data){ recipe ->
+                        Item(
+                            modifier = Modifier.padding(bottom = 22.dp),
+                            recipe = recipe
+                        )
+                    }
+                }
+            }
+            is RecipesFeedUiState.Error -> {
+                ErrorMessage(
+                    modifier = modifier,
+                    message = state.message,
+                    onRetryButtonClicked = {  }
+                )
+            }
+        }
+    }
+
+}
+
+@OptIn(ExperimentalGlideComposeApi::class)
+@Composable
+fun Item(
+    modifier: Modifier = Modifier,
+    recipe: Recipe = Recipe(
+        isBookmarked = false,
+        id = 10L,
+        imageUrl = null,
+        tittle = "000000000000000000000000000000000000",
+        cookingTimeMinutes = 45,
+        dishTypes = listOf(DishType.Appetizer),
+        score = 10.0
+    )
+) {
     Card(
         modifier = modifier
-            .height(216.dp)
+            .height(280.dp)
             .fillMaxWidth(0.88f),
-        shape = RoundedCornerShape(32.dp),
-        elevation = CardDefaults.cardElevation(10.dp),
+        shape = RoundedCornerShape(26.dp),
+        elevation = CardDefaults.cardElevation(4.dp),
         colors = CardDefaults.cardColors(Color.White)
-    ){
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
+    ) {
+        Box(modifier = Modifier
+            .fillMaxWidth()
         ){
-            RecipeCardBackground(
-                imageUrl = recipe.imageUrl
-            )
-            RecipeInfo(
-                recipe = recipe,
+            GlideImage(
                 modifier = Modifier
-                    .padding(
-                        start = 18.dp,
-                        bottom = 10.dp,
-                        end = 18.dp
-                    )
-                    .align(Alignment.BottomStart)
+                    .fillMaxSize(),
+                model = recipe.imageUrl,
+                contentDescription = "Recipe img",
+                contentScale = ContentScale.Crop,
+                transition = CrossFade
             )
-            BookMark(
-                isBookmarked = recipe.isBookmarked,
-                recipe = recipe,
+            Row(
                 modifier = Modifier
-                    .padding(7.dp)
-                    .align(Alignment.TopEnd),
-                onRecipeBookmarked = onRecipeBookmarked
-            )
+                    .align(Alignment.BottomCenter)
+                    .background(MaterialTheme.colorScheme.primary)
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                RecipeInfo(
+                    recipe = recipe,
+                    modifier = Modifier
+                        .fillMaxWidth(0.84f)
+                        .padding(
+                            start = 18.dp,
+                            bottom = 10.dp,
+                            end = 18.dp,
+                            top = 8.dp
+                        )
+
+                )
+                BookMark(
+                    isBookmarked = recipe.isBookmarked,
+                    recipe = recipe,
+                    modifier = Modifier
+                        .align(Alignment.Bottom)
+                        .padding(end = 10.dp, bottom = 8.dp),
+                    onRecipeBookmarked = { _, _ -> }
+                )
+            }
         }
     }
 }
+
 
 @Composable
 fun BookMark(
@@ -597,34 +425,6 @@ fun BookMark(
             contentDescription = "bookmark"
         )
     }
-}
-
-@OptIn(ExperimentalGlideComposeApi::class)
-@Composable
-internal fun RecipeCardBackground(
-    imageUrl: String?
-){
-    val backgroundColor = MaterialTheme.colorScheme.background
-
-    val whiteGradient = remember {
-        Brush.verticalGradient(
-            0.0f to Color(0,0,0,20),
-            0.92f to backgroundColor
-        )
-    }
-
-    GlideImage(
-        modifier = Modifier
-            .fillMaxSize()
-            .drawWithContent {
-                this.drawContent()
-                this.drawRect(whiteGradient)
-            },
-        model = imageUrl,
-        contentDescription = "Recipe img",
-        contentScale = ContentScale.Crop,
-        transition = CrossFade
-    )
 }
 
 @Composable
