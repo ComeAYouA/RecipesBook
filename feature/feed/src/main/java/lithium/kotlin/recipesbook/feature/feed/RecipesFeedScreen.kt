@@ -33,7 +33,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -55,13 +57,15 @@ import com.bumptech.glide.integration.compose.CrossFade
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import lithium.kotlin.recipesbook.core.model.DishType
+import lithium.kotlin.recipesbook.core.model.Filter
+import lithium.kotlin.recipesbook.core.model.FilterProperty
 import lithium.kotlin.recipesbook.core.model.Recipe
 import lithium.kotlin.recipesbook.core.model.description
 import lithium.kotlin.recipesbook.core.ui.R
 import lithium.kotlin.recipesbook.core.ui.extension.convertToResource
 
 @Composable
-fun Preview(
+fun RecipeFeedScreen(
     viewModel: RecipesFeedViewModel
 ){
 
@@ -75,8 +79,12 @@ fun Preview(
         )
     }
 
-    val settingsExpanded = remember {
+    val filterListExpanded = rememberSaveable{
         mutableStateOf(false)
+    }
+
+    val searchQuery = rememberSaveable {
+        mutableStateOf("")
     }
 
     Column(
@@ -90,26 +98,27 @@ fun Preview(
                     start = 16.dp,
                     end = 16.dp,
                     top = 47.dp,
-                    bottom = 16.dp
                 )
                 .fillMaxWidth(),
-            onSearchQueryChanged = { query -> viewModel.searchRandomRecipes(query)},
-            onSettingsButtonClicked = {settingsExpanded.value = !settingsExpanded.value}
+            onSearchQueryChanged = { query -> viewModel.searchRecipes(query)},
+            onFilterButtonClicked = {filterListExpanded.value = !filterListExpanded.value},
+            searchQuery = searchQuery
         )
 
         FiltersList(
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
-                .padding(bottom = 12.dp),
-            filters = listOf(
-                RecipesFeedFilter("Diet", listOf("Gluten Free", "Vegeterian", "Paleon", "Pescetarian")),
-                RecipesFeedFilter("Cousine", listOf("Asian", "African", "American", "Chinese"))
-            ),
-            isVisible = { settingsExpanded.value }
+                .padding(top = 12.dp, bottom = 12.dp),
+            filters = viewModel.recipesFeedFilters,
+            isVisible = { filterListExpanded.value },
+            onFilterSelected = {filter, property, isSelected ->
+                viewModel.changeFilter(filter, property, isSelected)
+                viewModel.searchRecipes(searchQuery.value)
+            }
         )
 
 
-        Feed(
+        RecipesFeed(
             modifier = Modifier
                 .align(Alignment.CenterHorizontally),
             viewModel = viewModel
@@ -124,11 +133,9 @@ fun Preview(
 fun SearchBar(
     modifier: Modifier = Modifier,
     onSearchQueryChanged: (String) -> Unit = {},
-    onSettingsButtonClicked: () -> Unit = {}
+    onFilterButtonClicked: () -> Unit = {},
+    searchQuery: MutableState<String> = rememberSaveable { mutableStateOf("") }
 ){
-    val searchQuery = rememberSaveable {
-        mutableStateOf("")
-    }
 
     Row(
         modifier = modifier,
@@ -177,7 +184,7 @@ fun SearchBar(
                 .background(MaterialTheme.colorScheme.primary, CircleShape)
                 .size(40.dp)
                 .align(Alignment.CenterVertically),
-            onClick = onSettingsButtonClicked
+            onClick = onFilterButtonClicked
         )
 
     }
@@ -209,13 +216,19 @@ fun FilterButton(
 @Composable
 fun FiltersList(
     modifier: Modifier = Modifier,
-    filters: List<RecipesFeedFilter>,
-    isVisible: () -> Boolean
+    filters: List<Filter>,
+    isVisible: () -> Boolean,
+    onFilterSelected: (Filter, FilterProperty, Boolean) -> Unit
 ){
 
     val launchAnimationProgression = animateFloatAsState(
         targetValue = if (isVisible()) 1f else 0f, label = "filterList animation"
     )
+
+    val filterListHeight = remember {
+        mutableIntStateOf(0)
+    }
+
 
     Column(
         modifier = modifier
@@ -223,18 +236,24 @@ fun FiltersList(
 
                 val placeable = measurable.measure(constraints)
 
-                layout(height = (placeable.height * launchAnimationProgression.value).toInt(), width = placeable.width){
-                    placeable.place(0,0)
+                if (placeable.height != 0) filterListHeight.intValue = placeable.height
+
+                layout(
+                    height = (filterListHeight.intValue * launchAnimationProgression.value).toInt(),
+                    width = placeable.width
+                ) {
+                    placeable.place(0, 0)
                 }
             }
             .graphicsLayer {
                 this.alpha = launchAnimationProgression.value
             }
     ) {
-        filters.forEach{
+        if (isVisible()) filters.forEach{
             FilterItem(
                 modifier = Modifier.padding(bottom = 6.dp),
-                filter = it
+                filter = it,
+                onFilterSelected = onFilterSelected
             )
         }
     }
@@ -243,13 +262,14 @@ fun FiltersList(
 @Composable
 fun FilterItem(
     modifier: Modifier = Modifier,
-    filter: RecipesFeedFilter
+    filter: Filter,
+    onFilterSelected: (Filter, FilterProperty, Boolean) -> Unit
 ){
 
     Column(modifier = modifier) {
         Text(
             modifier = Modifier.padding(bottom = 6.dp, start = 14.dp),
-            text = filter.name,
+            text = filter.filterName,
             fontSize = 18.sp,
         )
 
@@ -257,9 +277,10 @@ fun FilterItem(
             contentPadding = PaddingValues(horizontal = 12.dp)
         ){
             items(filter.properties){ property ->
-                FilterProperty(
+                FilterBox(
                     modifier = Modifier.padding(end = 6.dp),
-                    propertyName = property
+                    property = property,
+                    onPropertySelected = {filterProperty, isSelected -> onFilterSelected(filter, filterProperty, isSelected)}
                 )
             }
         }
@@ -267,33 +288,34 @@ fun FilterItem(
 }
 
 @Composable
-fun FilterProperty(
+fun FilterBox(
     modifier: Modifier = Modifier,
-    propertyName: String
+    property: FilterProperty,
+    onPropertySelected: (FilterProperty, Boolean) -> Unit
 ){
     val isSelected = remember {
-        mutableStateOf(false)
+        mutableStateOf(property.isSelected)
     }
 
     Button(
         modifier = modifier
             .background(Color.Transparent),
         colors = ButtonDefaults.buttonColors(if (!isSelected.value) MaterialTheme.colorScheme.primary else Color(97, 193, 125)),
-        onClick = { isSelected.value = !isSelected.value }
+        onClick = {
+            isSelected.value = !isSelected.value
+            onPropertySelected(property, isSelected.value)
+        }
     ) {
         Text(
             modifier = Modifier,
-            text = propertyName
+            text = property.name
         )
     }
 
 }
 
-
-
-
 @Composable
-internal fun Feed(
+internal fun RecipesFeed(
     modifier: Modifier = Modifier,
     viewModel: RecipesFeedViewModel
 ){
@@ -311,7 +333,7 @@ internal fun Feed(
                     contentPadding = PaddingValues(vertical = 18.dp)
                 ){
                     items(state.data){ recipe ->
-                        Item(
+                        RecipeItem(
                             modifier = Modifier.padding(bottom = 22.dp),
                             recipe = recipe
                         )
@@ -332,22 +354,14 @@ internal fun Feed(
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-fun Item(
+fun RecipeItem(
     modifier: Modifier = Modifier,
-    recipe: Recipe = Recipe(
-        isBookmarked = false,
-        id = 10L,
-        imageUrl = null,
-        tittle = "000000000000000000000000000000000000",
-        cookingTimeMinutes = 45,
-        dishTypes = listOf(DishType.Appetizer),
-        score = 10.0
-    )
+    recipe: Recipe
 ) {
     Card(
         modifier = modifier
             .height(280.dp)
-            .fillMaxWidth(0.88f),
+            .fillMaxWidth(0.92f),
         shape = RoundedCornerShape(26.dp),
         elevation = CardDefaults.cardElevation(4.dp),
         colors = CardDefaults.cardColors(Color.White)

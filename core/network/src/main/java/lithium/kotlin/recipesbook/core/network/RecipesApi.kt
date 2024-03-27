@@ -13,12 +13,18 @@ interface RecipesApi {
 
     @Headers("x-api-key: $API_KEY")
     @GET("recipes/random")
-    suspend fun getRandomRecipes(@Query("number") number: Int = 50): RandomRecipesResponse
+    suspend fun getRandomRecipes(
+        @Query("number") number: Int = 50,
+    ): RandomRecipesResponse
 
+
+    // format of cuisine and diet filters parameter: filter1, filter2, filter3 (A comma-separated list of filters.)
     @Headers("x-api-key: $API_KEY")
     @GET("recipes/complexSearch")
     suspend fun searchRecipes(
         @Query("query") query: String,
+        @Query("cuisine") cuisine: String? = null,
+        @Query("diet") diet: String? = null,
         @Query("addRecipeInformation") recipeInformation: Boolean = true
     ): SearchRecipesResponse
 

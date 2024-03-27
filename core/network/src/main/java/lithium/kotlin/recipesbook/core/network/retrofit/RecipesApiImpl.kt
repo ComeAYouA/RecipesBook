@@ -14,8 +14,15 @@ internal class RecipesApiImpl @Inject constructor(
     private val recipeApi: RecipesApi = retrofit.create(RecipesApi::class.java)
     override suspend fun getRandomRecipes(number: Int): RandomRecipesResponse =
         recipeApi.getRandomRecipes()
-    override suspend fun searchRecipes(query: String, recipeInformation: Boolean): SearchRecipesResponse =
-        recipeApi. searchRecipes(query)
+
+    override suspend fun searchRecipes(
+        query: String,
+        cuisine: String?,
+        diet: String?,
+        recipeInformation: Boolean
+    ): SearchRecipesResponse =
+        recipeApi. searchRecipes(query, cuisine, diet)
+
 
     override suspend fun getRecipesByIds(ids: String): List<NetworkRecipeResource> =
         recipeApi.getRecipesByIds(ids)

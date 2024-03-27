@@ -2,6 +2,7 @@ package lithium.kotlin.recipesbook.core.domain
 
 import kotlinx.coroutines.cancel
 import lithium.kotlin.recipesbook.core.data.RecipesRepository
+import lithium.kotlin.recipesbook.core.model.Filter
 import lithium.kotlin.recipesbook.core.model.Recipe
 import lithium.kotlin.recipesbook.core.model.Result
 import javax.inject.Inject

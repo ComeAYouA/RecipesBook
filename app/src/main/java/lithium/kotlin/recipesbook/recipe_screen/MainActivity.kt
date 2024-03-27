@@ -11,7 +11,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import dagger.hilt.android.AndroidEntryPoint
 import lithium.kotlin.recipesbook.core.ui.theme.RecipesBookTheme
-import lithium.kotlin.recipesbook.feature.feed.Preview
+import lithium.kotlin.recipesbook.feature.feed.RecipeFeedScreen
 import lithium.kotlin.recipesbook.feature.feed.RecipesFeedViewModel
 
 @AndroidEntryPoint
@@ -33,7 +33,7 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     //RecipeScreen(viewModel)
-                    Preview(viewModel)
+                    RecipeFeedScreen(viewModel)
                 }
             }
         }

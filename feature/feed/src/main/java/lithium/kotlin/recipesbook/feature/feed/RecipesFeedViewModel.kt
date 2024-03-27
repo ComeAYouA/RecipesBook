@@ -11,6 +11,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import lithium.kotlin.recipesbook.core.domain.RecipesBaseUseCase
+import lithium.kotlin.recipesbook.core.model.CuisineFilter
+import lithium.kotlin.recipesbook.core.model.DietFilter
+import lithium.kotlin.recipesbook.core.model.Filter
+import lithium.kotlin.recipesbook.core.model.FilterProperty
 import lithium.kotlin.recipesbook.core.model.Recipe
 import lithium.kotlin.recipesbook.core.model.Result
 import javax.inject.Inject
@@ -19,14 +23,12 @@ import javax.inject.Inject
 class RecipesFeedViewModel @Inject constructor(
     private val recipesBaseUseCase: RecipesBaseUseCase
 ): ViewModel() {
-
-//    internal val contentUiState: MutableStateFlow<RecipesFeedContentUiState> =
-//        MutableStateFlow(RecipesFeedContentUiState.Loading)
-
     internal val screenUiState: MutableStateFlow<RecipesFeedUiState> =
         MutableStateFlow(
             RecipesFeedUiState.Loading
         )
+
+    internal val recipesFeedFilters: List<Filter> = listOf(DietFilter(), CuisineFilter())
 
     private val requestsContext = SupervisorJob() + Dispatchers.IO
 
@@ -48,7 +50,7 @@ class RecipesFeedViewModel @Inject constructor(
         }
     }
 
-    fun searchRandomRecipes(query: String) {
+    fun searchRecipes(query: String) {
 
         screenUiState.update {
             RecipesFeedUiState.Loading
@@ -64,37 +66,14 @@ class RecipesFeedViewModel @Inject constructor(
         viewModelScope.launch(requestsContext) {
             delay(1000)
 
-            val requestResult = recipesBaseUseCase.searchRecipesUseCase(query = query)
+            val requestResult = recipesBaseUseCase.searchRecipesUseCase(
+                query = query,
+                filters = recipesFeedFilters.toList()
+            )
 
             updateContentUiStateWithResult(requestResult)
         }
     }
-
-    fun searchBookmarkedRecipes(query: String){
-        screenUiState.update {
-            RecipesFeedUiState.Loading
-        }
-
-        requestsContext.cancelChildren()
-
-        query.ifBlank {
-            loadBookmarks()
-            return
-        }
-
-
-        viewModelScope.launch {
-
-            viewModelScope.launch(requestsContext) {
-                delay(1000)
-
-                val requestResult = recipesBaseUseCase.searchRecipesInBookmarksUseCase(query = query)
-
-                updateContentUiStateWithResult(requestResult)
-            }
-        }
-    }
-
     fun bookmarkRecipe(recipe: Recipe) {
         viewModelScope.launch {
             recipesBaseUseCase.addBookmarkedRecipeUseCase(recipe)
@@ -107,18 +86,10 @@ class RecipesFeedViewModel @Inject constructor(
         }
     }
 
-    fun loadBookmarks() {
-
-        viewModelScope.launch {
-
-            screenUiState.update {
-                RecipesFeedUiState.Loading
-            }
-
-            updateContentUiStateWithResult(
-                result =  recipesBaseUseCase.loadBookmarksUseCase()
-            )
-        }
+    fun changeFilter(filter: Filter, property: FilterProperty, isSelected: Boolean){
+        val filterIndex = recipesFeedFilters.indexOf(filter)
+        val propertyIndex = recipesFeedFilters[filterIndex].properties.indexOf(property)
+        recipesFeedFilters[filterIndex].properties[propertyIndex].isSelected = isSelected
     }
 
     private fun updateContentUiStateWithResult(result: Result<List<Recipe>>) =
