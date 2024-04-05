@@ -12,8 +12,11 @@ internal class RecipesApiImpl @Inject constructor(
 ): RecipesApi {
 
     private val recipeApi: RecipesApi = retrofit.create(RecipesApi::class.java)
-    override suspend fun getRandomRecipes(number: Int): RandomRecipesResponse =
-        recipeApi.getRandomRecipes()
+    override suspend fun getRandomRecipes(
+       number: Int,
+       filters: String?
+    ): RandomRecipesResponse =
+        recipeApi.getRandomRecipes(filters = filters)
 
     override suspend fun searchRecipes(
         query: String,

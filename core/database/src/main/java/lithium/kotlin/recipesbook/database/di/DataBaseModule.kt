@@ -13,9 +13,7 @@ import lithium.kotlin.recipesbook.database.room.RecipesDataBase
 @Module
 @InstallIn(SingletonComponent::class)
 interface DataBaseModule {
-
     companion object{
-
         @Provides
         fun provideRecipesDataBase(
             @ApplicationContext context: Context
@@ -25,7 +23,6 @@ interface DataBaseModule {
                 RecipesDataBase::class.java,
                 "recipes-database"
             ).build()
-
         @Provides
         fun provideRecipesDao(database: RecipesDataBase): RecipesDao = database.recipesDao()
     }

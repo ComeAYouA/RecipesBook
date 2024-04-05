@@ -3,7 +3,6 @@ package lithium.kotlin.recipesbook.core.domain
 import android.util.Log
 import lithium.kotlin.recipesbook.core.data.RecipesRepository
 import lithium.kotlin.recipesbook.core.model.Recipe
-import lithium.kotlin.recipesbook.core.model.Result
 import javax.inject.Inject
 
 class DeleteBookmarkedRecipeUseCase @Inject constructor(

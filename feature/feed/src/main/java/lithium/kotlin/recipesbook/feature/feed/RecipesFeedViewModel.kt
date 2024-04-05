@@ -29,6 +29,10 @@ class RecipesFeedViewModel @Inject constructor(
         )
 
     internal val recipesFeedFilters: List<Filter> = listOf(DietFilter(), CuisineFilter())
+    internal val recipesFeedFiltersIsEmpty: Boolean
+        get() = recipesFeedFilters.find { filter ->
+            filter.properties.find { it.isSelected } != null
+        } == null
 
     private val requestsContext = SupervisorJob() + Dispatchers.IO
 
@@ -36,7 +40,7 @@ class RecipesFeedViewModel @Inject constructor(
         loadRandomRecipes()
     }
 
-    fun loadRandomRecipes() {
+    private fun loadRandomRecipes() {
         viewModelScope.launch {
 
             screenUiState.update {
@@ -45,7 +49,7 @@ class RecipesFeedViewModel @Inject constructor(
 
 
             updateContentUiStateWithResult(
-                result = recipesBaseUseCase.loadRandomRecipesUseCase()
+                result = recipesBaseUseCase.loadRandomRecipesUseCase(recipesFeedFilters.toList())
             )
         }
     }

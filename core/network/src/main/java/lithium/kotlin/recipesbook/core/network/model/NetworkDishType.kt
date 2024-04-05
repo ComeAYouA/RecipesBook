@@ -65,6 +65,7 @@ fun NetworkDishType.asExternalModel(): DishType =
 
 internal val NetworkDishType.serialName: String
     get() = this::class.java.getField(this.name).getAnnotation(SerialName::class.java)!!.value
+
 internal object DishTypeSerializer : KSerializer<NetworkDishType> {
     private val className = this::class.qualifiedName!!
     private val lookup = NetworkDishType.values().associateBy({ it }, { it.serialName })

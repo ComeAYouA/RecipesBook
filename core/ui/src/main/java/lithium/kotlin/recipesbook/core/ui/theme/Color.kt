@@ -11,12 +11,14 @@ val PurpleGrey40 = Color(0xFF625b71)
 val Pink40 = Color(0xFF7D5260)
 
 
-val LightGreen60 = Color(216, 238, 130)
+val LightYellow60 = Color(216, 238, 130)
+
 val LightGreen80 = Color(211, 246, 221)
 val LightGreen100 = Color(153, 193, 128)
 val LightGreen200 = Color(202, 255, 169)
 
-val LightOrange = Color(165, 255, 190)
+val LightGreen = Color(165, 255, 190)
+val LightGreen20 = Color(97, 193, 125)
 
 val Green100 = Color(60, 112, 80)
 val Green200 = Color(63, 98, 47)

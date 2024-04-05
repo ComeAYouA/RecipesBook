@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
@@ -41,6 +40,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -60,7 +60,6 @@ import lithium.kotlin.recipesbook.core.model.DishType
 import lithium.kotlin.recipesbook.core.model.Filter
 import lithium.kotlin.recipesbook.core.model.FilterProperty
 import lithium.kotlin.recipesbook.core.model.Recipe
-import lithium.kotlin.recipesbook.core.model.description
 import lithium.kotlin.recipesbook.core.ui.R
 import lithium.kotlin.recipesbook.core.ui.extension.convertToResource
 
@@ -68,7 +67,6 @@ import lithium.kotlin.recipesbook.core.ui.extension.convertToResource
 fun RecipeFeedScreen(
     viewModel: RecipesFeedViewModel
 ){
-
     val backgroundColor = MaterialTheme.colorScheme.surface
     val onBackgroundColor = MaterialTheme.colorScheme.surfaceVariant
 
@@ -102,7 +100,8 @@ fun RecipeFeedScreen(
                 .fillMaxWidth(),
             onSearchQueryChanged = { query -> viewModel.searchRecipes(query)},
             onFilterButtonClicked = {filterListExpanded.value = !filterListExpanded.value},
-            searchQuery = searchQuery
+            searchQuery = searchQuery,
+            isFilterListEmpty = { viewModel.recipesFeedFiltersIsEmpty }
         )
 
         FiltersList(
@@ -117,7 +116,6 @@ fun RecipeFeedScreen(
             }
         )
 
-
         RecipesFeed(
             modifier = Modifier
                 .align(Alignment.CenterHorizontally),
@@ -130,12 +128,15 @@ fun RecipeFeedScreen(
 
 @Preview
 @Composable
-fun SearchBar(
+internal fun SearchBar(
     modifier: Modifier = Modifier,
     onSearchQueryChanged: (String) -> Unit = {},
     onFilterButtonClicked: () -> Unit = {},
+    isFilterListEmpty: () -> Boolean = {true},
     searchQuery: MutableState<String> = rememberSaveable { mutableStateOf("") }
 ){
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val secondaryColor = MaterialTheme.colorScheme.secondary
 
     Row(
         modifier = modifier,
@@ -181,22 +182,29 @@ fun SearchBar(
 
         FilterButton(
             modifier = Modifier
-                .background(MaterialTheme.colorScheme.primary, CircleShape)
+                .drawWithContent {
+                    val backgroundColor = if (isFilterListEmpty()){
+                        primaryColor
+                    } else {
+                        secondaryColor
+                    }
+                    drawCircle(backgroundColor)
+                    drawContent()
+                }
                 .size(40.dp)
                 .align(Alignment.CenterVertically),
-            onClick = onFilterButtonClicked
+            onClick = onFilterButtonClicked,
         )
 
     }
-
 }
 
 
 
 @Composable
-fun FilterButton(
+internal fun FilterButton(
     modifier: Modifier = Modifier,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ){
     IconButton(
         modifier = modifier,
@@ -214,7 +222,7 @@ fun FilterButton(
 
 
 @Composable
-fun FiltersList(
+internal fun FiltersList(
     modifier: Modifier = Modifier,
     filters: List<Filter>,
     isVisible: () -> Boolean,
@@ -260,7 +268,7 @@ fun FiltersList(
 }
 
 @Composable
-fun FilterItem(
+internal fun FilterItem(
     modifier: Modifier = Modifier,
     filter: Filter,
     onFilterSelected: (Filter, FilterProperty, Boolean) -> Unit
@@ -288,7 +296,7 @@ fun FilterItem(
 }
 
 @Composable
-fun FilterBox(
+internal fun FilterBox(
     modifier: Modifier = Modifier,
     property: FilterProperty,
     onPropertySelected: (FilterProperty, Boolean) -> Unit
@@ -300,7 +308,13 @@ fun FilterBox(
     Button(
         modifier = modifier
             .background(Color.Transparent),
-        colors = ButtonDefaults.buttonColors(if (!isSelected.value) MaterialTheme.colorScheme.primary else Color(97, 193, 125)),
+        colors = ButtonDefaults.buttonColors(
+            if (!isSelected.value) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.secondary
+            }
+        ),
         onClick = {
             isSelected.value = !isSelected.value
             onPropertySelected(property, isSelected.value)
@@ -533,7 +547,7 @@ internal fun DishTypes(
                             .padding(end = 4.dp)
                             .size(18.dp),
                         painter = painterResource(id = resource),
-                        contentDescription = type.description()
+                        contentDescription = type.description
                     )
                 }
             }

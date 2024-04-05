@@ -15,6 +15,7 @@ interface RecipesApi {
     @GET("recipes/random")
     suspend fun getRandomRecipes(
         @Query("number") number: Int = 50,
+        @Query("include-tags") filters: String? = null
     ): RandomRecipesResponse
 
 
