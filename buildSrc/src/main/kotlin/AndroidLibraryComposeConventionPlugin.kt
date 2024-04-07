@@ -19,6 +19,7 @@ class AndroidLibraryComposeConventionPlugin: Plugin<Project> {
             }
 
             dependencies {
+                add("implementation", versionCatalog.findLibrary("hilt-navigation-compose").get())
                 add("implementation", versionCatalog.findLibrary("compose-material3").get())
                 add("implementation", versionCatalog.findLibrary("compose-ui-tooling").get())
                 add("debugImplementation", versionCatalog.findLibrary("compose-ui-tooling-preview").get())

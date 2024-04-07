@@ -14,8 +14,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
@@ -32,14 +34,20 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -53,6 +61,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.bumptech.glide.integration.compose.CrossFade
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
@@ -65,7 +74,8 @@ import lithium.kotlin.recipesbook.core.ui.extension.convertToResource
 
 @Composable
 fun RecipeFeedScreen(
-    viewModel: RecipesFeedViewModel
+    viewModel: RecipesFeedViewModel = hiltViewModel(),
+    menuVisibilityChanged: (Boolean) -> Unit = {}
 ){
     val backgroundColor = MaterialTheme.colorScheme.surface
     val onBackgroundColor = MaterialTheme.colorScheme.surfaceVariant
@@ -77,6 +87,19 @@ fun RecipeFeedScreen(
         )
     }
 
+    val contentScrollState = rememberLazyListState()
+
+    val menuVisibility = remember {
+        derivedStateOf {
+            contentScrollState.firstVisibleItemScrollOffset <= 360 &&
+                    contentScrollState.firstVisibleItemIndex == 0
+        }
+    }
+
+    LaunchedEffect(key1 = menuVisibility.value){
+        menuVisibilityChanged(menuVisibility.value)
+    }
+
     val filterListExpanded = rememberSaveable{
         mutableStateOf(false)
     }
@@ -85,43 +108,46 @@ fun RecipeFeedScreen(
         mutableStateOf("")
     }
 
-    Column(
-        modifier = Modifier
-            .background(backgroundGradient)
-            .fillMaxSize()
-    ){
-        SearchBar(
+    Box{
+        Column(
             modifier = Modifier
-                .padding(
-                    start = 16.dp,
-                    end = 16.dp,
-                    top = 47.dp,
-                )
-                .fillMaxWidth(),
-            onSearchQueryChanged = { query -> viewModel.searchRecipes(query)},
-            onFilterButtonClicked = {filterListExpanded.value = !filterListExpanded.value},
-            searchQuery = searchQuery,
-            isFilterListEmpty = { viewModel.recipesFeedFiltersIsEmpty }
-        )
+                .background(backgroundGradient)
+                .fillMaxSize()
+        ){
+            SearchBar(
+                modifier = Modifier
+                    .padding(
+                        start = 16.dp,
+                        end = 16.dp,
+                        top = 47.dp,
+                        bottom = 12.dp,
+                    )
+                    .fillMaxWidth(),
+                onSearchQueryChanged = { query -> viewModel.searchRecipes(query)},
+                onFilterButtonClicked = {filterListExpanded.value = !filterListExpanded.value},
+                searchQuery = searchQuery,
+                isFilterListEmpty = { viewModel.recipesFeedFiltersIsEmpty }
+            )
 
-        FiltersList(
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally)
-                .padding(top = 12.dp, bottom = 12.dp),
-            filters = viewModel.recipesFeedFilters,
-            isVisible = { filterListExpanded.value },
-            onFilterSelected = {filter, property, isSelected ->
-                viewModel.changeFilter(filter, property, isSelected)
-                viewModel.searchRecipes(searchQuery.value)
-            }
-        )
+            FiltersList(
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .padding(bottom = 4.dp),
+                filters = viewModel.recipesFeedFilters,
+                isVisible = { filterListExpanded.value },
+                onFilterSelected = {filter, property, isSelected ->
+                    viewModel.changeFilter(filter, property, isSelected)
+                    viewModel.searchRecipes(searchQuery.value)
+                }
+            )
 
-        RecipesFeed(
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally),
-            viewModel = viewModel
-        )
-
+            RecipesFeed(
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally),
+                viewModel = viewModel,
+                scrollState = contentScrollState
+            )
+        }
     }
 }
 
@@ -183,7 +209,7 @@ internal fun SearchBar(
         FilterButton(
             modifier = Modifier
                 .drawWithContent {
-                    val backgroundColor = if (isFilterListEmpty()){
+                    val backgroundColor = if (isFilterListEmpty()) {
                         primaryColor
                     } else {
                         secondaryColor
@@ -331,9 +357,9 @@ internal fun FilterBox(
 @Composable
 internal fun RecipesFeed(
     modifier: Modifier = Modifier,
-    viewModel: RecipesFeedViewModel
+    viewModel: RecipesFeedViewModel,
+    scrollState: LazyListState = rememberLazyListState()
 ){
-
     val contentUiState = viewModel.screenUiState.collectAsState()
 
     contentUiState.value.let { state ->
@@ -344,7 +370,8 @@ internal fun RecipesFeed(
             is RecipesFeedUiState.Success -> {
                 LazyColumn(
                     modifier = modifier,
-                    contentPadding = PaddingValues(vertical = 18.dp)
+                    contentPadding = PaddingValues(top = 8.dp, bottom = 72.dp),
+                    state = scrollState
                 ){
                     items(state.data){ recipe ->
                         RecipeItem(
