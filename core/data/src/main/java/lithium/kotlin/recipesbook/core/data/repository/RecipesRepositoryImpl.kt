@@ -31,8 +31,8 @@ internal class RecipesRepositoryImpl @Inject constructor(
         return network.getRandomRecipes(filters = filterQuery).recipes.map(NetworkRecipeResource::asExternalModel)
     }
     override suspend fun searchRecipes(query: String, filters: List<Filter>): List<Recipe> {
-        val cuisine = filters.cuisineFilter?.toNetworkQuery()
-        val diet = filters.dietFilter?.toNetworkQuery()
+        val cuisine = filters.cuisineFilter?.toNetworkQuery()?.lowercase()
+        val diet = filters.dietFilter?.toNetworkQuery()?.lowercase()
 
         return network.searchRecipes(
             query,
@@ -41,6 +41,12 @@ internal class RecipesRepositoryImpl @Inject constructor(
         ).recipes
             .map(NetworkRecipeResource::asExternalModel)
     }
+
+    //* Bookmark recipes methods rework require in future *//
+
+    // It is necessary to save information about selected recipes in a local database
+    // and then update the information with the api
+
     override suspend fun getBookmarkedRecipes(): List<Recipe> {
         val userData = recipesDao.getBookmarkedRecipes().map { it.id }.joinToString(separator = ",")
 
