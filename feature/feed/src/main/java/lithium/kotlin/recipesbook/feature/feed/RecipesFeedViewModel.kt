@@ -42,11 +42,9 @@ class RecipesFeedViewModel @Inject constructor(
 
     private fun loadRandomRecipes() {
         viewModelScope.launch {
-
             screenUiState.update {
                 RecipesFeedUiState.Loading
             }
-
 
             updateContentUiStateWithResult(
                 result = recipesBaseUseCase.loadRandomRecipesUseCase(recipesFeedFilters.toList())

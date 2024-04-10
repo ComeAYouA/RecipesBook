@@ -1,7 +1,5 @@
 package lithium.kotlin.recipesbook.core.model
 
-
-// relocate description to enum class property !!!!!
 enum class DishType(
     val description: String
 ) {

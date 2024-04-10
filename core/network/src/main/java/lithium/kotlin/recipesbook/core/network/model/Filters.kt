@@ -8,6 +8,5 @@ val List<Filter>.cuisineFilter: CuisineFilter?
     get() = this.firstOrNull { it is CuisineFilter } as CuisineFilter?
 val List<Filter>.dietFilter: DietFilter?
     get() = this.firstOrNull { it is DietFilter } as DietFilter?
-
 fun Filter.toNetworkQuery(): String
         = this.properties.filter { it.isSelected }.joinToString(", ") { it.name }

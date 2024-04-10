@@ -8,16 +8,19 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.items
+import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
@@ -34,20 +37,14 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -75,30 +72,8 @@ import lithium.kotlin.recipesbook.core.ui.extension.convertToResource
 @Composable
 fun RecipeFeedScreen(
     viewModel: RecipesFeedViewModel = hiltViewModel(),
-    menuVisibilityChanged: (Boolean) -> Unit = {}
 ){
-    val backgroundColor = MaterialTheme.colorScheme.surface
-    val onBackgroundColor = MaterialTheme.colorScheme.surfaceVariant
-
-    val backgroundGradient = remember {
-        Brush.linearGradient(
-            0.3f to backgroundColor,
-            1.0f to onBackgroundColor,
-        )
-    }
-
-    val contentScrollState = rememberLazyListState()
-
-    val menuVisibility = remember {
-        derivedStateOf {
-            contentScrollState.firstVisibleItemScrollOffset <= 360 &&
-                    contentScrollState.firstVisibleItemIndex == 0
-        }
-    }
-
-    LaunchedEffect(key1 = menuVisibility.value){
-        menuVisibilityChanged(menuVisibility.value)
-    }
+    val contentScrollState = rememberLazyStaggeredGridState()
 
     val filterListExpanded = rememberSaveable{
         mutableStateOf(false)
@@ -108,51 +83,45 @@ fun RecipeFeedScreen(
         mutableStateOf("")
     }
 
-    Box{
-        Column(
+    Column(
+        modifier = Modifier
+            .fillMaxHeight()
+    ){
+        SearchBar(
             modifier = Modifier
-                .background(backgroundGradient)
-                .fillMaxSize()
-        ){
-            SearchBar(
-                modifier = Modifier
-                    .padding(
-                        start = 16.dp,
-                        end = 16.dp,
-                        top = 47.dp,
-                        bottom = 12.dp,
-                    )
-                    .fillMaxWidth(),
-                onSearchQueryChanged = { query -> viewModel.searchRecipes(query)},
-                onFilterButtonClicked = {filterListExpanded.value = !filterListExpanded.value},
-                searchQuery = searchQuery,
-                isFilterListEmpty = { viewModel.recipesFeedFiltersIsEmpty }
-            )
+                .padding(
+                    top = 40.dp,
+                    bottom = 12.dp,
+                )
+                .fillMaxWidth(),
+            onSearchQueryChanged = { query -> viewModel.searchRecipes(query)},
+            onFilterButtonClicked = {filterListExpanded.value = !filterListExpanded.value},
+            searchQuery = searchQuery,
+            isFilterListEmpty = { viewModel.recipesFeedFiltersIsEmpty }
+        )
 
-            FiltersList(
-                modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .padding(bottom = 4.dp),
-                filters = viewModel.recipesFeedFilters,
-                isVisible = { filterListExpanded.value },
-                onFilterSelected = {filter, property, isSelected ->
-                    viewModel.changeFilter(filter, property, isSelected)
-                    viewModel.searchRecipes(searchQuery.value)
-                }
-            )
+        FiltersList(
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .padding(bottom = 4.dp),
+            filters = viewModel.recipesFeedFilters,
+            isVisible = { filterListExpanded.value },
+            onFilterSelected = {filter, property, isSelected ->
+                viewModel.changeFilter(filter, property, isSelected)
+                viewModel.searchRecipes(searchQuery.value)
+            }
+        )
 
-            RecipesFeed(
-                modifier = Modifier
-                    .align(Alignment.CenterHorizontally),
-                viewModel = viewModel,
-                scrollState = contentScrollState
-            )
-        }
+        RecipesFeed(
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally),
+            viewModel = viewModel,
+            scrollState = contentScrollState
+        )
     }
 }
 
 
-@Preview
 @Composable
 internal fun SearchBar(
     modifier: Modifier = Modifier,
@@ -166,14 +135,14 @@ internal fun SearchBar(
 
     Row(
         modifier = modifier,
-        horizontalArrangement = Arrangement.Absolute.SpaceAround
+        horizontalArrangement = Arrangement.Absolute.SpaceEvenly
     ){
         BasicTextField(
             modifier = Modifier
                 .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(18.dp))
                 .height(40.dp)
                 .padding(8.dp)
-                .fillMaxWidth(0.8f),
+                .fillMaxWidth(0.68f),
             value = searchQuery.value,
             onValueChange = {
                 searchQuery.value = it
@@ -243,7 +212,6 @@ internal fun FilterButton(
             contentDescription = "settings"
         )
     }
-
 }
 
 
@@ -358,7 +326,7 @@ internal fun FilterBox(
 internal fun RecipesFeed(
     modifier: Modifier = Modifier,
     viewModel: RecipesFeedViewModel,
-    scrollState: LazyListState = rememberLazyListState()
+    scrollState: LazyStaggeredGridState = rememberLazyStaggeredGridState()
 ){
     val contentUiState = viewModel.screenUiState.collectAsState()
 
@@ -368,14 +336,18 @@ internal fun RecipesFeed(
                 modifier = modifier
             )
             is RecipesFeedUiState.Success -> {
-                LazyColumn(
+                LazyVerticalStaggeredGrid(
                     modifier = modifier,
-                    contentPadding = PaddingValues(top = 8.dp, bottom = 72.dp),
+                    contentPadding = PaddingValues(
+                        vertical = 20.dp, horizontal = 16.dp
+                    ),
+                    horizontalArrangement = Arrangement.spacedBy(40.dp),
+                    verticalItemSpacing = 24.dp,
+                    columns = StaggeredGridCells.Adaptive(260.dp),
                     state = scrollState
                 ){
                     items(state.data){ recipe ->
                         RecipeItem(
-                            modifier = Modifier.padding(bottom = 22.dp),
                             recipe = recipe
                         )
                     }
@@ -395,64 +367,59 @@ internal fun RecipesFeed(
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-fun RecipeItem(
+internal fun RecipeItem(
     modifier: Modifier = Modifier,
     recipe: Recipe
 ) {
     Card(
         modifier = modifier
-            .height(280.dp)
             .fillMaxWidth(0.92f),
         shape = RoundedCornerShape(26.dp),
         elevation = CardDefaults.cardElevation(4.dp),
         colors = CardDefaults.cardColors(Color.White)
     ) {
-        Box(modifier = Modifier
-            .fillMaxWidth()
-        ){
-            GlideImage(
+        GlideImage(
+            modifier = Modifier
+                .height(260.dp)
+                .fillMaxWidth(),
+            model = recipe.imageUrl,
+            contentDescription = "Recipe img",
+            contentScale = ContentScale.Crop,
+            transition = CrossFade
+        )
+        Row(
+            modifier = Modifier
+                .background(MaterialTheme.colorScheme.primary)
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            RecipeInfo(
+                recipe = recipe,
                 modifier = Modifier
-                    .fillMaxSize(),
-                model = recipe.imageUrl,
-                contentDescription = "Recipe img",
-                contentScale = ContentScale.Crop,
-                transition = CrossFade
-            )
-            Row(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .background(MaterialTheme.colorScheme.primary)
-                    .fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                RecipeInfo(
-                    recipe = recipe,
-                    modifier = Modifier
-                        .fillMaxWidth(0.84f)
-                        .padding(
-                            start = 18.dp,
-                            bottom = 10.dp,
-                            end = 18.dp,
-                            top = 8.dp
-                        )
+                    .fillMaxWidth(0.84f)
+                    .padding(
+                        start = 18.dp,
+                        bottom = 10.dp,
+                        end = 18.dp,
+                        top = 8.dp
+                    )
 
-                )
-                BookMark(
-                    isBookmarked = recipe.isBookmarked,
-                    recipe = recipe,
-                    modifier = Modifier
-                        .align(Alignment.Bottom)
-                        .padding(end = 10.dp, bottom = 8.dp),
-                    onRecipeBookmarked = { _, _ -> }
-                )
-            }
+            )
+            BookMark(
+                isBookmarked = recipe.isBookmarked,
+                recipe = recipe,
+                modifier = Modifier
+                    .align(Alignment.Bottom)
+                    .padding(end = 10.dp, bottom = 8.dp),
+                onRecipeBookmarked = { _, _ -> }
+            )
         }
     }
 }
 
 
 @Composable
-fun BookMark(
+internal fun BookMark(
     isBookmarked: Boolean,
     recipe: Recipe,
     modifier: Modifier,

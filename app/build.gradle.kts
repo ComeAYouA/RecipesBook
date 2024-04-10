@@ -23,10 +23,8 @@ dependencies {
     implementation(libs.gson.converter)
     implementation(libs.glide.compose)
 
-
     implementation(libs.core.ktx)
     implementation(libs.lifecycle.runtime.ktx)
-    implementation(libs.activity.compose)
     implementation(libs.junit)
     implementation(libs.androidx.test.ext.junit)
 

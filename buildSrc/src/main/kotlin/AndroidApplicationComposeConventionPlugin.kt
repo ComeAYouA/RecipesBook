@@ -22,6 +22,9 @@ class AndroidApplicationComposeConventionPlugin: Plugin<Project> {
                 add("implementation", versionCatalog.findLibrary("compose-material3").get())
                 add("implementation", versionCatalog.findLibrary("compose-ui-tooling").get())
                 add("debugImplementation", versionCatalog.findLibrary("compose-ui-tooling-preview").get())
+                add("implementation", versionCatalog.findLibrary("androidx-material3-windowSizeClass").get())
+                add("implementation", versionCatalog.findLibrary("activity-compose").get())
+                add("implementation", versionCatalog.findLibrary("compose-navigation").get())
             }
         }
     }
