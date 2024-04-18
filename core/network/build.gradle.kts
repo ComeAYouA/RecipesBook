@@ -1,3 +1,7 @@
+import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
+
+val apiKey: String = gradleLocalProperties(rootDir).getProperty("apiKey")
+
 plugins {
     id("recipes-book.android.library")
     id("recipes-book.android.hilt")
@@ -6,6 +10,16 @@ plugins {
 
 android {
     namespace = "lithium.kotlin.recipesbook.core.network"
+
+    buildFeatures {
+        buildConfig = true
+    }
+
+    buildTypes{
+        getByName("debug"){
+            buildConfigField("String", "apiKey", apiKey)
+        }
+    }
 }
 
 dependencies {

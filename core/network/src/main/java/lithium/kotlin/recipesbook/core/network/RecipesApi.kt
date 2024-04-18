@@ -1,5 +1,6 @@
 package lithium.kotlin.recipesbook.core.network
 
+import androidx.core.os.BuildCompat
 import lithium.kotlin.recipesbook.core.network.model.NetworkRecipeResource
 import lithium.kotlin.recipesbook.core.network.model.RandomRecipesResponse
 import lithium.kotlin.recipesbook.core.network.model.SearchRecipesResponse
@@ -7,7 +8,7 @@ import retrofit2.http.GET
 import retrofit2.http.Headers
 import retrofit2.http.Query
 
-private const val API_KEY = "e1ef555cb2154ed0bd1a290ab8a32e3e"
+private const val API_KEY = BuildConfig.apiKey
 
 interface RecipesApi {
 
@@ -37,4 +38,6 @@ interface RecipesApi {
     suspend fun getRecipesByIds(
         @Query("ids") ids: String,
     ): List<NetworkRecipeResource>
+
+
 }

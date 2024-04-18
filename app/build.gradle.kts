@@ -32,4 +32,5 @@ dependencies {
     implementation(project(":core:model"))
     implementation(project((":core:ui")))
     implementation(project((":feature:feed")))
+    implementation(project((":feature:recipe")))
 }
