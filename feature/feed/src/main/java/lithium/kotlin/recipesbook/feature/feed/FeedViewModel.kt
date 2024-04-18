@@ -20,17 +20,17 @@ import lithium.kotlin.recipesbook.core.model.Result
 import javax.inject.Inject
 
 @HiltViewModel
-class RecipesFeedViewModel @Inject constructor(
+internal class FeedViewModel @Inject constructor(
     private val recipesBaseUseCase: RecipesBaseUseCase
 ): ViewModel() {
-    internal val screenUiState: MutableStateFlow<RecipesFeedUiState> =
+    internal val screenUiState: MutableStateFlow<FeedUiState> =
         MutableStateFlow(
-            RecipesFeedUiState.Loading
+            FeedUiState.Loading
         )
 
-    internal val recipesFeedFilters: List<Filter> = listOf(DietFilter(), CuisineFilter())
-    internal val recipesFeedFiltersIsEmpty: Boolean
-        get() = recipesFeedFilters.find { filter ->
+    internal val feedFilters: List<Filter> = listOf(DietFilter(), CuisineFilter())
+    internal val feedFiltersIsEmpty: Boolean
+        get() = feedFilters.find { filter ->
             filter.properties.find { it.isSelected } != null
         } == null
 
@@ -43,11 +43,11 @@ class RecipesFeedViewModel @Inject constructor(
     private fun loadRandomRecipes() {
         viewModelScope.launch {
             screenUiState.update {
-                RecipesFeedUiState.Loading
+                FeedUiState.Loading
             }
 
             updateContentUiStateWithResult(
-                result = recipesBaseUseCase.loadRandomRecipesUseCase(recipesFeedFilters.toList())
+                result = recipesBaseUseCase.loadRandomRecipesUseCase(feedFilters.toList())
             )
         }
     }
@@ -55,7 +55,7 @@ class RecipesFeedViewModel @Inject constructor(
     fun searchRecipes(query: String) {
 
         screenUiState.update {
-            RecipesFeedUiState.Loading
+            FeedUiState.Loading
         }
 
         requestsContext.cancelChildren()
@@ -70,7 +70,7 @@ class RecipesFeedViewModel @Inject constructor(
 
             val requestResult = recipesBaseUseCase.searchRecipesUseCase(
                 query = query,
-                filters = recipesFeedFilters.toList()
+                filters = feedFilters.toList()
             )
 
             updateContentUiStateWithResult(requestResult)
@@ -89,22 +89,22 @@ class RecipesFeedViewModel @Inject constructor(
     }
 
     fun changeFilter(filter: Filter, property: FilterProperty, isSelected: Boolean){
-        val filterIndex = recipesFeedFilters.indexOf(filter)
-        val propertyIndex = recipesFeedFilters[filterIndex].properties.indexOf(property)
-        recipesFeedFilters[filterIndex].properties[propertyIndex].isSelected = isSelected
+        val filterIndex = feedFilters.indexOf(filter)
+        val propertyIndex = feedFilters[filterIndex].properties.indexOf(property)
+        feedFilters[filterIndex].properties[propertyIndex].isSelected = isSelected
     }
 
     private fun updateContentUiStateWithResult(result: Result<List<Recipe>>) =
         screenUiState.update {
             when (result) {
                     is Result.Success -> {
-                        RecipesFeedUiState.Success(
+                        FeedUiState.Success(
                             data = result.data
                         )
                     }
 
                     is Result.Error -> {
-                        RecipesFeedUiState.Error(
+                        FeedUiState.Error(
                             result.message
                         )
                     }

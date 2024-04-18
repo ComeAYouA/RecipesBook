@@ -2,6 +2,7 @@ package lithium.kotlin.recipesbook.core.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
+val LightYellow40 = Color(251, 255, 235)
 val LightYellow60 = Color(216, 238, 130)
 val LightGreen500 = Color(178, 238, 130)
 

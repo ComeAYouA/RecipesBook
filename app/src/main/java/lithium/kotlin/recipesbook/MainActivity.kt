@@ -1,6 +1,7 @@
 package lithium.kotlin.recipesbook
 
 import android.os.Bundle
+import android.view.WindowInsets
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -9,7 +10,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -22,6 +23,8 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
@@ -33,12 +36,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import dagger.hilt.android.AndroidEntryPoint
 import lithium.kotlin.recipesbook.core.ui.theme.RecipesBookTheme
-import lithium.kotlin.recipesbook.feature.feed.RecipeFeedScreen
 import lithium.kotlin.recipesbook.navigation.RecipesBookNavHost
 import lithium.kotlin.recipesbook.ui.AppUiState
 import lithium.kotlin.recipesbook.ui.rememberAppUiState
@@ -51,6 +53,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
+
+
             RecipesBookTheme(
                 dynamicColor = false
             ) {
@@ -83,28 +87,35 @@ fun MainScreen(
         )
     }
 
+    val density = LocalDensity.current
+
     Row(
         modifier = Modifier
-            .background(backgroundGradient),
+            .background(backgroundGradient)
+            .padding(top = with(density) {
+                ScaffoldDefaults.contentWindowInsets
+                    .getTop(density = density)
+                    .toDp()
+            }),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceAround
     ) {
         if (appUiState.shouldShowNavigationRail){
             NavigationRail(
                 modifier = Modifier
-                    .padding(horizontal = 32.dp)
+                    .padding(start = 52.dp, end = 31.dp)
             )
         }
 
-        Box {
+        Column {
             RecipesBookNavHost(
+                modifier = Modifier.weight(1f),
                 appUiState = appUiState
             )
 
             if (appUiState.shouldShowBottomNavigationBar){
                 NavigationBar(
                     modifier = Modifier
-                        .align(Alignment.BottomCenter)
                         .fillMaxWidth(),
                 )
             }
@@ -121,7 +132,7 @@ fun NavigationRail(
         verticalArrangement = Arrangement.SpaceAround
     ) {
         HomeNavigationIcon()
-        AddNavigationIcon(modifier = Modifier.padding(vertical = 30.dp))
+        AddNavigationIcon(Modifier.padding(vertical = 16.dp))
         BookmarksNavigationIcon()
     }
 }
@@ -133,7 +144,7 @@ fun NavigationBar(
     Row(
         modifier = modifier
             .background(MaterialTheme.colorScheme.surfaceBright)
-            .padding(vertical = 20.dp),
+            .padding(vertical = 10.dp),
         horizontalArrangement = Arrangement.SpaceAround,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -165,6 +176,7 @@ fun AddNavigationIcon(
     )
 }
 
+@Preview
 @Composable
 fun BookmarksNavigationIcon(
     modifier: Modifier = Modifier,
@@ -184,12 +196,14 @@ fun NavigationIcon(
 ){
     IconButton(
         modifier = modifier
-            .size(70.dp, 35.dp)
             .clip(RoundedCornerShape(12.dp))
-            .background(MaterialTheme.colorScheme.primary),
+            .background(MaterialTheme.colorScheme.primary)
+            .size(70.dp, 35.dp)
+            .padding(3.dp),
         onClick = {}
     ){
         Icon(
+            modifier = Modifier.size(70.dp, 35.dp),
             imageVector = icon,
             contentDescription = contentDescription
         )

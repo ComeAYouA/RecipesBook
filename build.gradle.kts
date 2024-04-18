@@ -1,4 +1,3 @@
-
 buildscript {
     repositories{
         google()
@@ -9,6 +8,8 @@ buildscript {
         classpath(libs.hilt.agp)
     }
 }
+
+
 
 plugins{
     alias(libs.plugins.hiltPlugin) apply false

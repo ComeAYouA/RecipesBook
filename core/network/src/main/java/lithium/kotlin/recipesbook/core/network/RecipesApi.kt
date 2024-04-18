@@ -8,9 +8,12 @@ import retrofit2.http.GET
 import retrofit2.http.Headers
 import retrofit2.http.Query
 
-private const val API_KEY = BuildConfig.apiKey
 
 interface RecipesApi {
+
+    companion object {
+        private const val API_KEY = BuildConfig.apiKey
+    }
 
     @Headers("x-api-key: $API_KEY")
     @GET("recipes/random")

@@ -2,9 +2,12 @@ package lithium.kotlin.recipesbook.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavOptions
 import androidx.navigation.compose.NavHost
 import lithium.kotlin.recipesbook.feature.feed.navigation.FEED_ROUTE
 import lithium.kotlin.recipesbook.feature.feed.navigation.feedScreen
+import lithium.kotlin.recipesbook.feature.recipe.navigation.navigateToRecipeScreen
+import lithium.kotlin.recipesbook.feature.recipe.navigation.recipeScreen
 import lithium.kotlin.recipesbook.ui.AppUiState
 
 
@@ -21,6 +24,12 @@ fun RecipesBookNavHost(
         navController = navController,
         startDestination = startDestination
     ){
-        feedScreen()
+        feedScreen(
+            onRecipeClick = { navController.navigateToRecipeScreen() }
+        )
+        recipeScreen(
+            isLandscape = appUiState.shouldShowNavigationRail,
+            onBackButtonPressed = { navController.popBackStack() }
+            )
     }
 }

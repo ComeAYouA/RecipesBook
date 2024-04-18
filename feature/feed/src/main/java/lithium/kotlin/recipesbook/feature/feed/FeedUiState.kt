@@ -2,12 +2,12 @@ package lithium.kotlin.recipesbook.feature.feed
 
 import lithium.kotlin.recipesbook.core.model.Recipe
 
-internal sealed interface RecipesFeedUiState {
-    object Loading : RecipesFeedUiState
+internal sealed interface FeedUiState {
+    object Loading : FeedUiState
     data class Success(
         val data: List<Recipe>
-    ) : RecipesFeedUiState
+    ) : FeedUiState
     data class Error(
         val message: String
-    ) : RecipesFeedUiState
+    ) : FeedUiState
 }

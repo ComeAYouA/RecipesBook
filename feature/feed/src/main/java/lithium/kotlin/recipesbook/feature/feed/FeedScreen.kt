@@ -3,13 +3,13 @@ package lithium.kotlin.recipesbook.feature.feed
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -55,7 +55,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -70,8 +69,9 @@ import lithium.kotlin.recipesbook.core.ui.R
 import lithium.kotlin.recipesbook.core.ui.extension.convertToResource
 
 @Composable
-fun RecipeFeedScreen(
-    viewModel: RecipesFeedViewModel = hiltViewModel(),
+internal fun FeedScreen(
+    onRecipeClick: () -> Unit,
+    viewModel: FeedViewModel = hiltViewModel(),
 ){
     val contentScrollState = rememberLazyStaggeredGridState()
 
@@ -90,21 +90,20 @@ fun RecipeFeedScreen(
         SearchBar(
             modifier = Modifier
                 .padding(
-                    top = 40.dp,
                     bottom = 12.dp,
                 )
                 .fillMaxWidth(),
             onSearchQueryChanged = { query -> viewModel.searchRecipes(query)},
             onFilterButtonClicked = {filterListExpanded.value = !filterListExpanded.value},
             searchQuery = searchQuery,
-            isFilterListEmpty = { viewModel.recipesFeedFiltersIsEmpty }
+            isFilterListEmpty = { viewModel.feedFiltersIsEmpty }
         )
 
         FiltersList(
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
                 .padding(bottom = 4.dp),
-            filters = viewModel.recipesFeedFilters,
+            filters = viewModel.feedFilters,
             isVisible = { filterListExpanded.value },
             onFilterSelected = {filter, property, isSelected ->
                 viewModel.changeFilter(filter, property, isSelected)
@@ -116,7 +115,8 @@ fun RecipeFeedScreen(
             modifier = Modifier
                 .align(Alignment.CenterHorizontally),
             viewModel = viewModel,
-            scrollState = contentScrollState
+            scrollState = contentScrollState,
+            onRecipeClick = onRecipeClick
         )
     }
 }
@@ -325,17 +325,18 @@ internal fun FilterBox(
 @Composable
 internal fun RecipesFeed(
     modifier: Modifier = Modifier,
-    viewModel: RecipesFeedViewModel,
-    scrollState: LazyStaggeredGridState = rememberLazyStaggeredGridState()
+    viewModel: FeedViewModel,
+    scrollState: LazyStaggeredGridState = rememberLazyStaggeredGridState(),
+    onRecipeClick: () -> Unit
 ){
     val contentUiState = viewModel.screenUiState.collectAsState()
 
     contentUiState.value.let { state ->
         when(state){
-            is RecipesFeedUiState.Loading -> CircularProgressIndicator(
+            is FeedUiState.Loading -> CircularProgressIndicator(
                 modifier = modifier
             )
-            is RecipesFeedUiState.Success -> {
+            is FeedUiState.Success -> {
                 LazyVerticalStaggeredGrid(
                     modifier = modifier,
                     contentPadding = PaddingValues(
@@ -348,12 +349,13 @@ internal fun RecipesFeed(
                 ){
                     items(state.data){ recipe ->
                         RecipeItem(
+                            onRecipeClick = onRecipeClick,
                             recipe = recipe
                         )
                     }
                 }
             }
-            is RecipesFeedUiState.Error -> {
+            is FeedUiState.Error -> {
                 ErrorMessage(
                     modifier = modifier,
                     message = state.message,
@@ -369,18 +371,20 @@ internal fun RecipesFeed(
 @Composable
 internal fun RecipeItem(
     modifier: Modifier = Modifier,
+    onRecipeClick: () -> Unit,
     recipe: Recipe
 ) {
     Card(
         modifier = modifier
-            .fillMaxWidth(0.92f),
-        shape = RoundedCornerShape(26.dp),
-        elevation = CardDefaults.cardElevation(4.dp),
+            .fillMaxWidth(0.92f)
+            .clickable { onRecipeClick() },
+        shape = RoundedCornerShape(18.dp),
+        elevation = CardDefaults.cardElevation(6.dp),
         colors = CardDefaults.cardColors(Color.White)
     ) {
         GlideImage(
             modifier = Modifier
-                .height(260.dp)
+                .height(168.dp)
                 .fillMaxWidth(),
             model = recipe.imageUrl,
             contentDescription = "Recipe img",
