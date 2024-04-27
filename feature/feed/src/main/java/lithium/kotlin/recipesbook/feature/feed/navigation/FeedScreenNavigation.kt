@@ -14,7 +14,7 @@ fun NavController.navigateToFeedScreen(navOptions: NavOptions)
     = this.navigate(FEED_ROUTE, navOptions)
 
 fun NavGraphBuilder.feedScreen(
-    onRecipeClick: () -> Unit
+    onRecipeClick: (Long) -> Unit
 ) {
     composable(
         route = FEED_ROUTE,

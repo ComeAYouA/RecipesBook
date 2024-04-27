@@ -12,5 +12,7 @@ import lithium.kotlin.recipesbook.core.data.repository.RecipesRepositoryImpl
 @InstallIn(SingletonComponent::class)
 internal interface DataModule {
     @Binds
-    fun bind_from_RecipesRepositoryImpl_to_RecipesRepository(input: RecipesRepositoryImpl): RecipesRepository
+    fun bind_from_RecipesRepositoryImpl_to_RecipesRepository(
+        input: RecipesRepositoryImpl
+    ): RecipesRepository
 }

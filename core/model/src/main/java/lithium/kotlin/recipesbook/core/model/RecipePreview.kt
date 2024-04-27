@@ -1,6 +1,6 @@
 package lithium.kotlin.recipesbook.core.model
 
-data class Recipe(
+data class RecipePreview(
     val isBookmarked: Boolean = false,
     val id: Long,
     val tittle: String?,

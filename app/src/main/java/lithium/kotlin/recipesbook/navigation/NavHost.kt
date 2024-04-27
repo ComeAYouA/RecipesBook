@@ -25,11 +25,11 @@ fun RecipesBookNavHost(
         startDestination = startDestination
     ){
         feedScreen(
-            onRecipeClick = { navController.navigateToRecipeScreen() }
+            onRecipeClick = { id -> navController.navigateToRecipeScreen(id) }
         )
         recipeScreen(
             isLandscape = appUiState.shouldShowNavigationRail,
             onBackButtonPressed = { navController.popBackStack() }
-            )
+        )
     }
 }

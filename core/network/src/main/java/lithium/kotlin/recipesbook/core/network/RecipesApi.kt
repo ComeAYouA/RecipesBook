@@ -1,11 +1,12 @@
 package lithium.kotlin.recipesbook.core.network
 
-import androidx.core.os.BuildCompat
 import lithium.kotlin.recipesbook.core.network.model.NetworkRecipeResource
+import lithium.kotlin.recipesbook.core.network.model.NetworkRecipePreviewResource
 import lithium.kotlin.recipesbook.core.network.model.RandomRecipesResponse
 import lithium.kotlin.recipesbook.core.network.model.SearchRecipesResponse
 import retrofit2.http.GET
 import retrofit2.http.Headers
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 
@@ -40,7 +41,13 @@ interface RecipesApi {
     @GET("recipes/informationBulk")
     suspend fun getRecipesByIds(
         @Query("ids") ids: String,
-    ): List<NetworkRecipeResource>
+    ): List<NetworkRecipePreviewResource>
+
+    @Headers("x-api-key: $API_KEY")
+    @GET("recipes/{id}/information")
+    suspend fun getRecipeInformation(
+        @Path("id") id: Long
+    ): NetworkRecipeResource
 
 
 }

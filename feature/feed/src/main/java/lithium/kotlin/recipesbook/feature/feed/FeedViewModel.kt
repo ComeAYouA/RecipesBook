@@ -15,7 +15,7 @@ import lithium.kotlin.recipesbook.core.model.CuisineFilter
 import lithium.kotlin.recipesbook.core.model.DietFilter
 import lithium.kotlin.recipesbook.core.model.Filter
 import lithium.kotlin.recipesbook.core.model.FilterProperty
-import lithium.kotlin.recipesbook.core.model.Recipe
+import lithium.kotlin.recipesbook.core.model.RecipePreview
 import lithium.kotlin.recipesbook.core.model.Result
 import javax.inject.Inject
 
@@ -76,15 +76,15 @@ internal class FeedViewModel @Inject constructor(
             updateContentUiStateWithResult(requestResult)
         }
     }
-    fun bookmarkRecipe(recipe: Recipe) {
+    fun bookmarkRecipe(recipePreview: RecipePreview) {
         viewModelScope.launch {
-            recipesBaseUseCase.addBookmarkedRecipeUseCase(recipe)
+            recipesBaseUseCase.addBookmarkedRecipeUseCase(recipePreview)
         }
     }
 
-    fun unbookmarkRecipe(recipe: Recipe) {
+    fun unbookmarkRecipe(recipePreview: RecipePreview) {
         viewModelScope.launch {
-            recipesBaseUseCase.deleteBookmarkedRecipeUseCase(recipe)
+            recipesBaseUseCase.deleteBookmarkedRecipeUseCase(recipePreview)
         }
     }
 
@@ -94,7 +94,7 @@ internal class FeedViewModel @Inject constructor(
         feedFilters[filterIndex].properties[propertyIndex].isSelected = isSelected
     }
 
-    private fun updateContentUiStateWithResult(result: Result<List<Recipe>>) =
+    private fun updateContentUiStateWithResult(result: Result<List<RecipePreview>>) =
         screenUiState.update {
             when (result) {
                     is Result.Success -> {

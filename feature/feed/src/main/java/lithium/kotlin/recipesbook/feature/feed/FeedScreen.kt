@@ -64,13 +64,13 @@ import com.bumptech.glide.integration.compose.GlideImage
 import lithium.kotlin.recipesbook.core.model.DishType
 import lithium.kotlin.recipesbook.core.model.Filter
 import lithium.kotlin.recipesbook.core.model.FilterProperty
-import lithium.kotlin.recipesbook.core.model.Recipe
+import lithium.kotlin.recipesbook.core.model.RecipePreview
 import lithium.kotlin.recipesbook.core.ui.R
 import lithium.kotlin.recipesbook.core.ui.extension.convertToResource
 
 @Composable
 internal fun FeedScreen(
-    onRecipeClick: () -> Unit,
+    onRecipeClick: (Long) -> Unit,
     viewModel: FeedViewModel = hiltViewModel(),
 ){
     val contentScrollState = rememberLazyStaggeredGridState()
@@ -90,7 +90,7 @@ internal fun FeedScreen(
         SearchBar(
             modifier = Modifier
                 .padding(
-                    bottom = 12.dp,
+                    vertical = 12.dp,
                 )
                 .fillMaxWidth(),
             onSearchQueryChanged = { query -> viewModel.searchRecipes(query)},
@@ -327,7 +327,7 @@ internal fun RecipesFeed(
     modifier: Modifier = Modifier,
     viewModel: FeedViewModel,
     scrollState: LazyStaggeredGridState = rememberLazyStaggeredGridState(),
-    onRecipeClick: () -> Unit
+    onRecipeClick: (Long) -> Unit
 ){
     val contentUiState = viewModel.screenUiState.collectAsState()
 
@@ -350,7 +350,7 @@ internal fun RecipesFeed(
                     items(state.data){ recipe ->
                         RecipeItem(
                             onRecipeClick = onRecipeClick,
-                            recipe = recipe
+                            recipePreview = recipe
                         )
                     }
                 }
@@ -371,13 +371,13 @@ internal fun RecipesFeed(
 @Composable
 internal fun RecipeItem(
     modifier: Modifier = Modifier,
-    onRecipeClick: () -> Unit,
-    recipe: Recipe
+    onRecipeClick: (Long) -> Unit,
+    recipePreview: RecipePreview
 ) {
     Card(
         modifier = modifier
             .fillMaxWidth(0.92f)
-            .clickable { onRecipeClick() },
+            .clickable { onRecipeClick(recipePreview.id) },
         shape = RoundedCornerShape(18.dp),
         elevation = CardDefaults.cardElevation(6.dp),
         colors = CardDefaults.cardColors(Color.White)
@@ -386,7 +386,7 @@ internal fun RecipeItem(
             modifier = Modifier
                 .height(168.dp)
                 .fillMaxWidth(),
-            model = recipe.imageUrl,
+            model = recipePreview.imageUrl,
             contentDescription = "Recipe img",
             contentScale = ContentScale.Crop,
             transition = CrossFade
@@ -398,7 +398,7 @@ internal fun RecipeItem(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             RecipeInfo(
-                recipe = recipe,
+                recipePreview = recipePreview,
                 modifier = Modifier
                     .fillMaxWidth(0.84f)
                     .padding(
@@ -410,8 +410,8 @@ internal fun RecipeItem(
 
             )
             BookMark(
-                isBookmarked = recipe.isBookmarked,
-                recipe = recipe,
+                isBookmarked = recipePreview.isBookmarked,
+                recipePreview = recipePreview,
                 modifier = Modifier
                     .align(Alignment.Bottom)
                     .padding(end = 10.dp, bottom = 8.dp),
@@ -425,9 +425,9 @@ internal fun RecipeItem(
 @Composable
 internal fun BookMark(
     isBookmarked: Boolean,
-    recipe: Recipe,
+    recipePreview: RecipePreview,
     modifier: Modifier,
-    onRecipeBookmarked: (Recipe, Boolean) -> Unit
+    onRecipeBookmarked: (RecipePreview, Boolean) -> Unit
 ) {
     val bookmark = remember {
         mutableStateOf(isBookmarked)
@@ -437,7 +437,7 @@ internal fun BookMark(
         modifier = modifier,
         onClick = {
             bookmark.value = !bookmark.value
-            onRecipeBookmarked(recipe, bookmark.value)
+            onRecipeBookmarked(recipePreview, bookmark.value)
         },
     ) {
         Icon(
@@ -469,12 +469,12 @@ internal fun RecipeTittle(
 
 @Composable
 internal fun RecipeInfo(
-    recipe: Recipe,
+    recipePreview: RecipePreview,
     modifier: Modifier
 ){
     Box(modifier = modifier){
         RecipeTittle(
-            tittle = recipe.tittle ?: "No title to this recipe",
+            tittle = recipePreview.tittle ?: "No title to this recipe",
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .padding(bottom = 6.dp)
@@ -482,9 +482,9 @@ internal fun RecipeInfo(
         RecipeAdditionalInfo(
             modifier = Modifier
                 .align(Alignment.BottomStart),
-            readyInMinutes = recipe.cookingTimeMinutes,
-            dishTypes = recipe.dishTypes,
-            rating = recipe.score?.toInt()
+            readyInMinutes = recipePreview.cookingTimeMinutes,
+            dishTypes = recipePreview.dishTypes,
+            rating = recipePreview.score?.toInt()
         )
     }
 }

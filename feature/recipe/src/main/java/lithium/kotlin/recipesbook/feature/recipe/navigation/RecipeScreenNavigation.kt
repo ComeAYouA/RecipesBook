@@ -1,25 +1,43 @@
 package lithium.kotlin.recipesbook.feature.recipe.navigation
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
+import androidx.navigation.NavType
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import androidx.navigation.navDeepLink
 import lithium.kotlin.recipesbook.feature.recipe.RecipeScreen
+import java.net.URLDecoder
+import java.net.URLEncoder
+import kotlin.text.Charsets.UTF_8
+
+internal const val RECIPE_ID = "recipeId"
+
+private val URL_CHARACTER_ENCODING = UTF_8.name()
+
+internal class RecipeArgs(val recipeId: String) {
+    constructor(savedStateHandle: SavedStateHandle) :
+            this(URLDecoder.decode(checkNotNull(savedStateHandle[RECIPE_ID]), URL_CHARACTER_ENCODING))
+}
 
 const val RECIPE_ROUTE = "recipe_route"
-private const val URI_PATTERN_LINK = "https://www.lithium.kotlin.recipesbook/recipe"
 
-fun NavController.navigateToRecipeScreen()
-        = this.navigate(RECIPE_ROUTE)
+fun NavController.navigateToRecipeScreen(recipeId: Long) {
+    val encodedId = URLEncoder.encode(recipeId.toString(), URL_CHARACTER_ENCODING)
+    navigate("$RECIPE_ROUTE/$encodedId") {
+        launchSingleTop = true
+    }
+}
 
 fun NavGraphBuilder.recipeScreen(
     isLandscape: Boolean = false,
-    onBackButtonPressed: () -> Unit
+    onBackButtonPressed: () -> Unit,
 ) {
     composable(
-        route = RECIPE_ROUTE,
-        deepLinks = listOf(
-            navDeepLink { uriPattern =  URI_PATTERN_LINK},
+        route = "$RECIPE_ROUTE/{${RECIPE_ID}}",
+        arguments = listOf(
+            navArgument(RECIPE_ID) { type = NavType.StringType }
         ),
     ) {
         RecipeScreen(

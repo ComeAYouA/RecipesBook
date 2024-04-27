@@ -1,6 +1,7 @@
 package lithium.kotlin.recipesbook.core.network.retrofit
 
 import lithium.kotlin.recipesbook.core.network.RecipesApi
+import lithium.kotlin.recipesbook.core.network.model.NetworkRecipePreviewResource
 import lithium.kotlin.recipesbook.core.network.model.NetworkRecipeResource
 import lithium.kotlin.recipesbook.core.network.model.RandomRecipesResponse
 import lithium.kotlin.recipesbook.core.network.model.SearchRecipesResponse
@@ -27,7 +28,10 @@ internal class RecipesApiImpl @Inject constructor(
         recipeApi. searchRecipes(query, cuisine, diet)
 
 
-    override suspend fun getRecipesByIds(ids: String): List<NetworkRecipeResource> =
+    override suspend fun getRecipesByIds(ids: String): List<NetworkRecipePreviewResource> =
         recipeApi.getRecipesByIds(ids)
+
+    override suspend fun getRecipeInformation(id: Long): NetworkRecipeResource =
+        recipeApi.getRecipeInformation(id)
 
 }

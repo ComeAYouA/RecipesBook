@@ -1,9 +1,10 @@
 package lithium.kotlin.recipesbook.core.model
 
 data class Ingredient(
-    val id: Long,
+    val id: Int,
     val name: String,
     val amount: Double,
     val unit: String,
-    val image: String
+    val image: String,
+    val measures: Measures
 )
