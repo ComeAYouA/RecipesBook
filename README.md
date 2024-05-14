@@ -29,6 +29,6 @@
   <p align="center"><img src = "https://github.com/ComeAYouA/RecipesBook/blob/main/modules.png"></p>
  
   <h2 align="center">App preview (for now)</h2>
-  <p align="center"><img src = "https://github.com/ComeAYouA/RecipesBook/blob/main/preview/AppPreview.png"></p>
+  <p align="center"><img src = "https://github.com/ComeAYouA/RecipesBook/blob/main/img.png"></p>
   
  
