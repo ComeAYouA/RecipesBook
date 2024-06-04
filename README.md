@@ -27,8 +27,9 @@
 
   <h2 align="center">Module dependency diagram (for now)</h2>
   <p align="center"><img src = "https://github.com/ComeAYouA/RecipesBook/blob/main/modules.png"></p>
- 
-  <h2 align="center">App preview (for now)</h2>
-  <p align="center"><img src = "https://github.com/ComeAYouA/RecipesBook/blob/main/img.png"></p>
+  
+|  |  |  |  |
+|---|---|---|---|
+| ![](https://github.com/ComeAYouA/RecipesBook/blob/main/Screenshot_20240604_231501_RecipesBook.jpg) | ![](https://github.com/ComeAYouA/RecipesBook/blob/main/Screenshot_20240604_231509_RecipesBook.jpg) | ![](https://github.com/ComeAYouA/RecipesBook/blob/main/Screenshot_20240604_231528_RecipesBook.jpg) | ![](https://github.com/ComeAYouA/RecipesBook/blob/main/Screenshot_20240604_231804_RecipesBook.jpg) |
   
  
